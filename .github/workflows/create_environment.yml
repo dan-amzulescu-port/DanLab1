@@ -26,7 +26,7 @@ on:
         description: 'S3 Prefix'
         required: false
         default: ''
-      EC2_size:
+      EC2_Size:
         description: 'EC2 instance size'
         required: false
         default: ''
