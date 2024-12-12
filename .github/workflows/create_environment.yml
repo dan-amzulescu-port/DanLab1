@@ -26,7 +26,10 @@ on:
         description: 'S3 Prefix'
         required: false
         default: ''
-
+      EC2_size:
+        description: 'EC2 instance size'
+        required: false
+        default: ''
 env:
   PORT_API_URL: "https://api.getport.io/v1"
 
