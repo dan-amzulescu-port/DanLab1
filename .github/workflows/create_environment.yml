@@ -22,6 +22,10 @@ on:
         description: 'Project name for the workflow'
         required: false
         default: 'default-project'
+      prefix:
+        description: 'S3 Prefix'
+        required: false
+        default: ''
 
 env:
   PORT_API_URL: "https://api.getport.io/v1"
