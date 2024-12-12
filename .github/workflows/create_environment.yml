@@ -6,6 +6,22 @@ on:
       port_context:
         description: 'Port context in JSON format'
         required: true
+      requires_s_3:
+        description: 'Does this workflow require S3?'
+        required: false
+        default: 'false'
+      requires_ec_2:
+        description: 'Does this workflow require EC2?'
+        required: false
+        default: 'false'
+      required_v_cluster:
+        description: 'Does this workflow require a V Cluster?'
+        required: false
+        default: 'false'
+      project:
+        description: 'Project name for the workflow'
+        required: false
+        default: 'default-project'
 
 env:
   PORT_API_URL: "https://api.getport.io/v1"
@@ -23,27 +39,4 @@ jobs:
         id: get-token
         run: |
           response=$(curl -s -X POST "${PORT_API_URL}/auth/access_token" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "clientId": "'"${{ secrets.PORT_CLIENT_ID }}"'",
-              "clientSecret": "'"${{ secrets.PORT_CLIENT_SECRET }}"'"
-            }')
-
-          token=$(echo "$response" | jq -r '.accessToken')
-
-          if [[ -z "$token" || "$token" == "null" ]]; then
-            echo "Error: Failed to retrieve access token"
-            echo "$response"
-            exit 1
-          fi
-
-          echo "PORT_JWT_TOKEN=$token" >> $GITHUB_ENV
-
-      # Post log to Port
-      - name: Post Log to Port
-        run: |
-          run_id=$(echo '${{ github.event.inputs.port_context }}' | jq -r '.runId')
-          curl -X POST "${PORT_API_URL}/actions/runs/$run_id/logs" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $PORT_JWT_TOKEN" \
-            -d '{"message": "aaaaaaaaaa"}'
+            -H "Content-Ty
