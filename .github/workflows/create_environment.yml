@@ -48,8 +48,8 @@ jobs:
           response=$(curl -s -X POST "${PORT_API_URL}/auth/access_token" \
             -H "Content-Type: application/json" \
             -d '{
-              "clientId": "'"${{ secrets.PORT_CLIENT_ID }}"'",
-              "clientSecret": "'"${{ secrets.PORT_CLIENT_SECRET }}"'"
+              "clientId": "${{ secrets.PORT_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.PORT_CLIENT_SECRET }}"
             }')
 
           token=$(echo "$response" | jq -r '.accessToken')
