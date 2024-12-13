@@ -3,7 +3,7 @@ import logging
 import os
 
 import requests
-
+from constants import PORT_API_URL
 
 def send_post_request(url, headers, data):
     """
@@ -21,7 +21,7 @@ def get_token(client_id, client_secret):
     """
     Retrieve the PORT JWT Token using the provided client credentials.
     """
-    url = os.getenv("PORT_API_URL") + "/auth/access-token"
+    url = f"{PORT_API_URL}/auth/access-token"
     data = {"clientId": client_id, "clientSecret": client_secret}
     response = send_post_request(url, {"Content-Type": "application/json"}, data)
 
@@ -35,7 +35,7 @@ def post_log(port_context, message, token):
     Post a log entry to Port.
     """
     run_id = json.loads(port_context).get("runId")
-    url = f"{os.getenv('PORT_API_URL')}/actions/runs/{run_id}/logs"
+    url = f"{PORT_API_URL}/actions/runs/{run_id}/logs"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
@@ -45,12 +45,12 @@ def post_log(port_context, message, token):
 
     if response:
         logging.info("Successfully posted log: %s", message)
-
+#
 def create_environment(project, token, ttl):
-    """
-    Create an environment entity in Port.
-    """
-    url = f"{os.getenv('PORT_API_URL')}/blueprints/environment/entities"
+#     """
+#     Create an environment entity in Port.
+
+    url = f"{PORT_API_URL}/blueprints/environment/entities"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
@@ -76,7 +76,7 @@ def create_cloud_resource(project, resource_type, token):
     """
     Create a cloud resource entity in Port.
     """
-    url = f"{os.getenv('PORT_API_URL')}/blueprints/cloudResource/entities"
+    url = f"{PORT_API_URL}/blueprints/cloudResource/entities"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
