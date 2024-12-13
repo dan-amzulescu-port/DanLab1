@@ -6,10 +6,10 @@ on:
       port_context:
         description: "Port context in JSON format"
         required: true
-      requires_s3:
+      requires_s_3:
         description: "Does this workflow require S3?"
         required: true
-      requires_ec2:
+      requires_ec_2:
         description: "Does this workflow require EC2?"
         required: true
       project:
@@ -18,6 +18,9 @@ on:
       ttl:
         description: "Time to live (TTL) for the environment"
         required: true
+      required_v_cluster:
+        description: "Do we require vCluster"
+        required: false
 
 jobs:
   setup:
