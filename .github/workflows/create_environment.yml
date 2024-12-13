@@ -56,10 +56,12 @@ jobs:
           --ttl '${{ github.event.inputs.ttl }}' \
           --all '${{ github.event.inputs.ttl.port_context }}'
 
-    - name: Create environment
+    - name: Get token
+      id: get_token
       run: |
-        python .github/workflows/create_environment.py create_environment \
-          --project '${{ github.event.inputs.project }}' \
-          --token "${{ env.PORT_TOKEN }}"
+        TOKEN=$(python .github/workflows/create_environment.py get_token \
+          --client_id "${{ secrets.PORT_CLIENT_ID }}" \
+          --client_secret "${{ secrets.PORT_CLIENT_SECRET }}")
+        echo "PORT_TOKEN=$TOKEN" >> $GITHUB_ENV
 
     
