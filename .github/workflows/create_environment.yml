@@ -47,7 +47,7 @@ jobs:
           --requires_s3 '${{ github.event.inputs.requires_s3 }}' \
           --requires_ec2 '${{ github.event.inputs.requires_ec2 }}' \
           --project '${{ github.event.inputs.project }}' \
-          --ttl '${{ github.event.inputs.ttl }}'
+          --ttl '${{ github.event.inputs.ttl }}' \
           --all '${{ github.event }}'
 
     
