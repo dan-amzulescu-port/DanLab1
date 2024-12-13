@@ -46,7 +46,7 @@ def post_log(port_context, message, token):
     if response:
         logging.info("Successfully posted log: %s", message)
 
-def create_environment(project, token):
+def create_environment(project, token, ttl):
     """
     Create an environment entity in Port.
     """
@@ -60,7 +60,7 @@ def create_environment(project, token):
         "title": "Environment",
         "properties": {
             "time_bounded": True,
-            "ttl": "1h"  # Example default TTL
+            "ttl": "2024-12-13T22:50:00.000Z"  # Example default TTL
         },
         "relations": {
             "project": [project]
