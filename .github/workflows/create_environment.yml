@@ -1,72 +1,50 @@
-name: Post Log to Port
+name: Environment Setup Workflow
 
 on:
   workflow_dispatch:
     inputs:
       port_context:
-        description: 'Port context in JSON format'
+        description: "Port context in JSON format"
         required: true
-      requires_s_3:
-        description: 'Does this workflow require S3?'
-        required: false
-        default: 'false'
-      requires_ec_2:
-        description: 'Does this workflow require EC2?'
-        required: false
-        default: 'false'
-      required_v_cluster:
-        description: 'Does this workflow require a V Cluster?'
-        required: false
-        default: 'false'
+      requires_s3:
+        description: "Does this workflow require S3?"
+        required: true
+      requires_ec2:
+        description: "Does this workflow require EC2?"
+        required: true
       project:
-        description: 'Project name for the workflow'
-        required: false
-        default: 'default-project'
-      prefix:
-        description: 'S3 Prefix'
-        required: false
-        default: ''
-      EC2_Size:
-        description: 'EC2 instance size'
-        required: false
-        default: ''
-env:
-  PORT_API_URL: "https://api.getport.io/v1"
+        description: "Project name"
+        required: true
+      ttl:
+        description: "Time to live (TTL) for the environment"
+        required: true
 
 jobs:
-  post-log:
+  setup:
     runs-on: ubuntu-latest
+
     steps:
-      # Checkout the repository
-      - name: Checkout Code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      # Obtain PORT_JWT_TOKEN
-      - name: Retrieve PORT JWT Token
-        id: get-token
-        run: |
-          response=$(curl -s -X POST "${PORT_API_URL}/auth/access_token" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "clientId": "${{ secrets.PORT_CLIENT_ID }}",
-              "clientSecret": "${{ secrets.PORT_CLIENT_SECRET }}"
-            }')
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
 
-          token=$(echo "$response" | jq -r '.accessToken')
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
-          if [[ -z "$token" || "$token" == "null" ]]; then
-            echo "Error: Failed to retrieve access token"
-            echo "$response"
-            exit 1
-          fi
+    - name: Print inputs
+      run: |
+        python create_environment.py print_inputs \
+          --port_context '${{ github.event.inputs.port_context }}' \
+          --requires_s3 '${{ github.event.inputs.requires_s3 }}' \
+          --requires_ec2 '${{ github.event.inputs.requires_ec2 }}' \
+          --project '${{ github.event.inputs.project }}' \
+          --ttl '${{ github.event.inputs.ttl }}'
+          --all '${{ github.event }}'
 
-          echo "PORT_JWT_TOKEN=$token" >> $GITHUB_ENV
-
-      # Post log to Port
-      - name: Post Log to Port
-        run: |
-          run_id=$(echo '${{ github.event.inputs.port_context }}' | jq -r '.runId')
-          curl -X POST "${PORT_API_URL}/actions/runs/$run_id/logs" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $PORT_JWT_TOKEN" \
-            -d '{"message": "aaaaaaaaaa"}'
+    

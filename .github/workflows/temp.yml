@@ -1,0 +1,29 @@
+    - name: Get token
+      id: get_token
+      run: |
+        TOKEN=$(python create_environment.py get_token \
+          --client_id "${{ secrets.PORT_CLIENT_ID }}" \
+          --client_secret "${{ secrets.PORT_CLIENT_SECRET }}")
+        echo "PORT_TOKEN=$TOKEN" >> $GITHUB_ENV
+
+    - name: Create environment
+      run: |
+        python create_environment.py create_environment \
+          --project '${{ github.event.inputs.project }}' \
+          --token "${{ env.PORT_TOKEN }}"
+
+    - name: Create S3 resource (if required)
+      if: ${{ github.event.inputs.requires_s3 == 'true' }}
+      run: |
+        python create_environment.py create_cloud_resource \
+          --project '${{ github.event.inputs.project }}' \
+          --resource_type 's3' \
+          --token "${{ env.PORT_TOKEN }}"
+
+    - name: Create EC2 resource (if required)
+      if: ${{ github.event.inputs.requires_ec2 == 'true' }}
+      run: |
+        python create_environment.py create_cloud_resource \
+          --project '${{ github.event.inputs.project }}' \
+          --resource_type 'ec2' \
+          --token "${{ env.PORT_TOKEN }}"
