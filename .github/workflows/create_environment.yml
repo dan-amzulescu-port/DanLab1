@@ -58,7 +58,7 @@ jobs:
 
     - name: Create environment
       run: |
-        python create_environment.py create_environment \
+        python .github/workflows/create_environment.py create_environment \
           --project '${{ github.event.inputs.project }}' \
           --token "${{ env.PORT_TOKEN }}"
 
