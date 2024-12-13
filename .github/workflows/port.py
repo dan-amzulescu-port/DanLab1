@@ -21,7 +21,7 @@ def get_token(client_id, client_secret):
     """
     Retrieve the PORT JWT Token using the provided client credentials.
     """
-    print(f"url = {PORT_API_URL}/auth/access-token")
+    logging.info(f"url = {PORT_API_URL}/auth/access-token")
     url = f"{PORT_API_URL}/auth/access-token"
     data = {"clientId": client_id, "clientSecret": client_secret}
     response = send_post_request(url, {"Content-Type": "application/json"}, data)
