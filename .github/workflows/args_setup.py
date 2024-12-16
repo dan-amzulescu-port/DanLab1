@@ -9,6 +9,8 @@ def create_environment_args(subparsers):
     create_env_parser = subparsers.add_parser("create_environment")
     create_env_parser.add_argument("--project", required=True, help="Project name")
     create_env_parser.add_argument("--token", required=True, help="PORT JWT token")
+    create_env_parser.add_argument("--ttl", required=True, help="ttl of the ENV")
+    create_env_parser.add_argument("--triggered_by", required=True, help="who triggered deployment userIdentifier")
 
 
 def post_log_args(subparsers):

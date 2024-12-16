@@ -47,7 +47,7 @@ def post_log(port_context, message, token):
     if response:
         logging.info("Successfully posted log: %s", message)
 #
-def create_environment(project, token, ttl, deployed_by):
+def create_environment(project, token, ttl, triggered_by):
 #     """
 #     Create an environment entity in Port.
 
@@ -70,7 +70,7 @@ def create_environment(project, token, ttl, deployed_by):
         },
         "relations": {
             "project": project,
-            "deployed_by": deployed_by
+            "triggered_by": triggered_by
         }
     }
 

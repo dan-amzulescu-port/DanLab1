@@ -63,5 +63,5 @@ jobs:
           --project '${{ github.event.inputs.port_context.project_identifier }}' \
           --token '${{ env.PORT_TOKEN }}' \
           --ttl '${{ github.event.inputs.ttl }}' \
-          --deployed_by '${{ github.event.inputs.port_context.triggered_by }}' \
+          --triggered_by '${{ github.event.inputs.port_context.triggered_by }}' \
     
