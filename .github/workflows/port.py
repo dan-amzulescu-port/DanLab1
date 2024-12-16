@@ -4,6 +4,7 @@ import os
 
 import requests
 from constants import PORT_API_URL
+from helper import calculate_time_delta
 
 def send_post_request(url, headers, data):
     """
@@ -46,7 +47,7 @@ def post_log(port_context, message, token):
     if response:
         logging.info("Successfully posted log: %s", message)
 #
-def create_environment(project, token, ttl):
+def create_environment(project, token, ttl, deployed_by):
 #     """
 #     Create an environment entity in Port.
 
@@ -55,15 +56,21 @@ def create_environment(project, token, ttl):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
     }
+    if ttl == "Indefinite":
+        time_bounded = False
+    else:
+        time_bounded = True
+    ttl = calculate_time_delta(ttl)
     data = {
         "identifier": f"environment_{os.urandom(4).hex()}",
         "title": "Environment",
         "properties": {
-            "time_bounded": True,
-            "ttl": "2024-12-13T22:50:00.000Z"  # Example default TTL
+            "time_bounded": time_bounded,
+            "ttl": ttl  # Example default TTL
         },
         "relations": {
-            "project": [project]
+            "project": project,
+            "deployed_by": deployed_by
         }
     }
 

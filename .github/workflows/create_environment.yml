@@ -46,16 +46,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r .github/workflows/requirements.txt
 
-    - name: Print inputs
-      run: |
-        python .github/workflows/create_environment.py print_inputs \
-          --port_context '${{ github.event.inputs.port_context }}' \
-          --requires_s3 '${{ github.event.inputs.requires_s3 }}' \
-          --requires_ec2 '${{ github.event.inputs.requires_ec2 }}' \
-          --project '${{ github.event.inputs.project }}' \
-          --ttl '${{ github.event.inputs.ttl }}' \
-          --all '${{ github.event.inputs.ttl.port_context }}'
-
     - name: Get token
       id: get_token
       run: |
@@ -64,4 +54,11 @@ jobs:
           --client_secret "${{ secrets.PORT_CLIENT_SECRET }}")
         echo "PORT_TOKEN=$TOKEN" >> $GITHUB_ENV
 
+    - name: Create environment
+      run: |
+        python create_environment.py create_environment \
+          --project '${{ github.event.inputs.port_context.project_identifier }}' \
+          --token '${{ env.PORT_TOKEN }}' \
+          --ttl '${{ github.event.inputs.ttl }}' \
+          --deployed_by '${{ github.event.inputs.port_context.triggered_by }}' \
     
