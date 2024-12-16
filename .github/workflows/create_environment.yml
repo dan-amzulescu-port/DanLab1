@@ -59,6 +59,8 @@ jobs:
         echo "----printing context-----"
         echo '${{ github.event.inputs.port_context }}'
         echo "----printing context-----"
+        echo '${{ github.event.inputs.port_context.project_identifier }}'
+        echo "----printing context-----"
         python .github/workflows/create_environment.py create_environment \
           --project '${{ github.event.inputs.port_context.project_identifier }}' \
           --token '${{ env.PORT_TOKEN }}' \
