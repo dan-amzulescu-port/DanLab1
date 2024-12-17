@@ -59,7 +59,11 @@ jobs:
           --client_secret "${{ secrets.PORT_CLIENT_SECRET }}")
         echo "----printing TOKEN1-----"
         echo "token1='$TOKEN1'"
-        TOKEN1=$(echo "$TOKEN1" | base64)
+        if [ -n "$TOKEN1" ]; then
+          TOKEN1=$(echo -n "$TOKEN1" | base64)
+        else
+          echo "TOKEN1 is empty"
+        fi
         DECODED_TOKEN=$(echo "TOKEN1" | base64 -d)
         echo "Base64 token1: $DECODED_TOKEN"
         echo "----printing TOKEN(env)-----"
