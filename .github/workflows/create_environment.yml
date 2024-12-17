@@ -62,7 +62,7 @@ jobs:
     - name: Create environment
       run: |
         echo "----printing inputs-----"
-        echo '${{ github.event.inputs }}'
+        echo '${{ toJson(github.event.inputs) }}'
         echo "----printing context-----"
         echo '${{ github.event.inputs.triggered_by }}'
         echo "----printing context-----"
