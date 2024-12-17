@@ -28,6 +28,9 @@ def get_token(client_id, client_secret):
 
     if response is None:
         return None
+
+    with open(os.environ['GITHUB_ENV'], 'a') as env_file:
+        env_file.write(f"TOKEN={response.json().get("accessToken")}\n")
     return response.json().get("accessToken")
 
 def post_log(port_context, message, token):
@@ -79,9 +82,6 @@ def create_environment(project: str = '', token: str = '', ttl: str = '', trigge
     if response:
         logging.info("Successfully created environment: %s", data["identifier"])
 
-    with open(os.environ['GITHUB_ENV'], 'a') as env_file:
-        env_file.write(f"TOKEN={token}\n")
-    return token
 
 def create_cloud_resource(project, resource_type, token):
     """

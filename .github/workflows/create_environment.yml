@@ -58,9 +58,9 @@ jobs:
           --client_id "${{ secrets.PORT_CLIENT_ID }}" \
           --client_secret "${{ secrets.PORT_CLIENT_SECRET }}")
         echo "----printing TOKEN1-----"
-        echo "token1='$TOKEN1'"       
+        echo "token1='::remove-mask::$TOKEN1'"       
         echo "----printing TOKEN(env)-----"
-        echo "PORT_TOKEN: '${{ env.PORT_TOKEN }}'"
+        echo "PORT_TOKEN: '::remove-mask::${{ env.PORT_TOKEN }}'"
         echo "----printing env-----"
 
     - name: Create environment
