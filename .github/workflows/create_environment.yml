@@ -58,16 +58,27 @@ jobs:
           --client_id "${{ secrets.PORT_CLIENT_ID }}" \
           --client_secret "${{ secrets.PORT_CLIENT_SECRET }}"
 
+    - name: Create S3 resource (if required)
+      run: |
+        python .github/workflows/create_environment.py create_cloud_resource \
+          --requires_s3 '${{ github.event.inputs.project_id }}' \
+          --requires_ec2 '${{ env.PORT_TOKEN }}' \
+          --project '${{ github.event.inputs.ttl }}' \
+          --token '${{ github.event.inputs.triggered_by }}'
+        python .github/workflows/create_environment.py post_log \
+          --message '✅ Environment successfully created! 🥳 Ready to deploy 🚀' \
+          --token '${{ env.PORT_TOKEN }}' \
+          --run_id '${{ github.event.inputs.runId }}'
+
     - name: Create environment
       run: |
-        echo "----printing inputs-----"
-        echo '${{ toJson(github.event.inputs) }}'
-        echo "----printing context-----"
-        echo '${{ github.event.inputs.triggered_by }}'
-        echo "----printing context-----"
         python .github/workflows/create_environment.py create_environment \
           --project '${{ github.event.inputs.project_id }}' \
           --token '${{ env.PORT_TOKEN }}' \
           --ttl '${{ github.event.inputs.ttl }}' \
           --triggered_by '${{ github.event.inputs.triggered_by }}'
+        python .github/workflows/create_environment.py post_log \
+          --message '✅ Environment successfully created! 🥳 Ready to deploy 🚀' \
+          --token '${{ env.PORT_TOKEN }}' \
+          --run_id '${{ github.event.inputs.runId }}'
     

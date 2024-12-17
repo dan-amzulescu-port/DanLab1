@@ -1,6 +1,6 @@
-import json
 import logging
 import os
+import json
 
 import requests
 from constants import PORT_API_URL
@@ -13,6 +13,7 @@ def send_post_request(url, headers, data):
     response = requests.post(url, headers=headers, json=data)
 
     if response.status_code != 200:
+        logging.info("response.status_code: %s", response.status_code)
         logging.error("Failed to send POST request: %s", response.text)
         return None
 
@@ -33,11 +34,10 @@ def get_token(client_id, client_secret):
         env_file.write(f"PORT_TOKEN={response.json().get("accessToken")}\n")
     return response.json().get("accessToken")
 
-def post_log(port_context, message, token):
+def post_log(message, token, run_id):
     """
     Post a log entry to Port.
     """
-    run_id = json.loads(port_context).get("runId")
     url = f"{PORT_API_URL}/actions/runs/{run_id}/logs"
     headers = {
         "Content-Type": "application/json",
@@ -81,7 +81,9 @@ def create_environment(project: str = '', token: str = '', ttl: str = '', trigge
     response = send_post_request(url, headers, data)
 
     if response:
-        logging.info("Successfully created environment: %s", data["identifier"])
+        logging.info(f"Successfully created environment: {data["identifier"]}")
+        logging.info(f"Successfully created environment response: {response}")
+        logging.info(f"Successfully created environment e_id: {response.json()["entity"]["identifier"]}")
 
 
 def create_cloud_resource(project, resource_type, token):
