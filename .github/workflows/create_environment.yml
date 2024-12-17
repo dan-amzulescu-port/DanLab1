@@ -54,19 +54,14 @@ jobs:
     - name: Get token
       id: get_token
       run: |
-        TOKEN1=$(python .github/workflows/create_environment.py get_token \
+        TOKEN=$(python .github/workflows/create_environment.py get_token \
           --client_id "${{ secrets.PORT_CLIENT_ID }}" \
           --client_secret "${{ secrets.PORT_CLIENT_SECRET }}")
-        echo "----printing TOKEN1-----"
-        echo "token1='$TOKEN1'"
-        if [ -n "$TOKEN1" ]; then
-        echo "bla1"
-          TOKEN1=$(echo -n "$TOKEN1" | base64)
-        else
-          echo "TOKEN1 is empty"
-        fi
-        echo "bla2"
-        DECODED_TOKEN=$(echo "TOKEN1" | base64 -d)
+        echo "1"
+        TOKEN_ENC=$(echo -n "TOKEN" | base64)
+        echo "2"
+        DECODED_TOKEN=$(echo "TOKEN_ENC" | base64 -d)
+        echo "decoded=$DECODED_TOKEN"
         
         echo "Base64 token1: $DECODED_TOKEN"
         echo "----printing TOKEN(env)-----"
