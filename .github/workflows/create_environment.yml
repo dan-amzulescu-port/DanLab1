@@ -65,8 +65,9 @@ jobs:
         else
           echo "TOKEN1 is empty"
         fi
-        DECODED_TOKEN=$(echo "TOKEN1" | base64 -d)
         echo "bla2"
+        DECODED_TOKEN=$(echo "TOKEN1" | base64 -d)
+        
         echo "Base64 token1: $DECODED_TOKEN"
         echo "----printing TOKEN(env)-----"
         echo "PORT_TOKEN: '${{ env.PORT_TOKEN }}'"
