@@ -70,5 +70,5 @@ jobs:
           --project '${{ github.event.inputs.project_id }}' \
           --token '${{ env.PORT_TOKEN }}' \
           --ttl '${{ github.event.inputs.ttl }}' \
-          --triggered_by '${{ github.event.inputs.triggered_by }}' \
+          --triggered_by '${{ github.event.inputs.triggered_by }}'
     
