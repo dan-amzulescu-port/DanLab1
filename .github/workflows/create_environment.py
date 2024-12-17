@@ -38,8 +38,10 @@ def execute_command(args):
             post_log(args.port_context, args.message, args.token)
         case "create_environment":
             return create_environment(args.project, args.token, args.ttl, args.triggered_by)
-        case "create_cloud_resource":
-            create_cloud_resource(args.project, args.resource_type, args.token)
+        case "create_ec2_cloud_resource":
+            create_ec2_cloud_resource(args.project, args.resource_type, args.token)
+        case "create_s3_cloud_resource":
+            create_ec2_cloud_resource(args.project, args.resource_type, args.token)
         case _:
             print("Invalid command")
 
