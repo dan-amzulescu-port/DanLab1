@@ -27,7 +27,7 @@ on:
       runId:
         description: "runId"
         required: false
-      project_identifier:
+      project:
         description: "project_identifier"
         required: false
 jobs:
