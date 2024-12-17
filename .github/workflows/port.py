@@ -28,8 +28,6 @@ def get_token(client_id, client_secret):
 
     if response is None:
         return None
-    logging.info(response.json())
-    logging.info(response.json().get("accessToken"))
     return response.json().get("accessToken")
 
 def post_log(port_context, message, token):

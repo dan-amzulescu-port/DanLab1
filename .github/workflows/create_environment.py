@@ -24,14 +24,19 @@ def main():
     add_arguments_for_commands(args_parser.subparsers)
     args = args_parser.parser.parse_args()
 
-    return execute_command(args)
+    exec_com= execute_command(args)
+    logging.info(f"main exec_com: {exec_com}")
+    return exec_com
+
 
 def execute_command(args):
     match args.command:
         case "print_inputs":
             print_inputs(args.port_context, args.requires_s3, args.requires_ec2, args.project, args.ttl)
         case "get_token":
-            return get_token(args.client_id, args.client_secret)
+            token=get_token(args.client_id, args.client_secret)
+            logging.info(f"execute_command Token: {token}")
+            return token
         case "post_log":
             post_log(args.port_context, args.message, args.token)
         case "create_environment":
