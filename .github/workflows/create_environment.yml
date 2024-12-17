@@ -58,7 +58,7 @@ jobs:
           --client_id "${{ secrets.PORT_CLIENT_ID }}" \
           --client_secret "${{ secrets.PORT_CLIENT_SECRET }}")
         echo "1"
-        TOKEN_ENC=$(echo -n "TOKEN" | base64)
+        TOKEN_ENC=$(echo -n "$TOKEN" | base64)
         echo "TOKEN_ENC=$TOKEN_ENC"
         echo "2"
         DECODED_TOKEN=$(echo "TOKEN_ENC" | base64 -d)
