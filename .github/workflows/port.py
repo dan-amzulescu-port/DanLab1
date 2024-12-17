@@ -64,6 +64,7 @@ def create_environment(project: str = '', token: str = '', ttl: str = '', trigge
     else:
         time_bounded = True
     ttl = calculate_time_delta(ttl)
+    logging.info("ttl: %s", ttl)
     data = {
         "identifier": f"environment_{os.urandom(4).hex()}",
         "title": "Environment",
