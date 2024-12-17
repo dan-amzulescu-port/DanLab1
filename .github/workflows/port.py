@@ -81,6 +81,7 @@ def create_environment(project: str = '', token: str = '', ttl: str = '', trigge
 
     with open(os.environ['GITHUB_ENV'], 'a') as env_file:
         env_file.write(f"TOKEN={token}\n")
+    return token
 
 def create_cloud_resource(project, resource_type, token):
     """

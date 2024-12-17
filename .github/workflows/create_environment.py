@@ -37,7 +37,7 @@ def execute_command(args):
         case "post_log":
             post_log(args.port_context, args.message, args.token)
         case "create_environment":
-            create_environment(args.project, args.token, args.ttl, args.triggered_by)
+            return create_environment(args.project, args.token, args.ttl, args.triggered_by)
         case "create_cloud_resource":
             create_cloud_resource(args.project, args.resource_type, args.token)
         case _:

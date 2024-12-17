@@ -54,12 +54,12 @@ jobs:
     - name: Get token
       id: get_token
       run: |
-        TOKEN=$(python .github/workflows/create_environment.py get_token \
+        TOKEN1=$(python .github/workflows/create_environment.py get_token \
           --client_id "${{ secrets.PORT_CLIENT_ID }}" \
           --client_secret "${{ secrets.PORT_CLIENT_SECRET }}")
         echo "----printing TOKEN1-----"
-        echo "token='$TOKEN'"       
-        echo "----printing TOKEN2-----"
+        echo "token1='$TOKEN1'"       
+        echo "----printing TOKEN(env)-----"
         echo "PORT_TOKEN: '${{ env.PORT_TOKEN }}'"
         echo "----printing env-----"
 
