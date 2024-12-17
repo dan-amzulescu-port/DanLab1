@@ -28,6 +28,9 @@ on:
         description: "runId"
         required: false
       project:
+        description: "project"
+        required: false
+      project_id:
         description: "project_identifier"
         required: false
 jobs:
@@ -58,13 +61,13 @@ jobs:
 
     - name: Create environment
       run: |
-        echo "----printing context-----"
-        echo '${{ github.event.inputs.project_identifier }}'
+        echo "----printing inputs-----"
+        echo '${{ github.event.inputs }}'
         echo "----printing context-----"
         echo '${{ github.event.inputs.triggered_by }}'
         echo "----printing context-----"
         python .github/workflows/create_environment.py create_environment \
-          --project '${{ github.event.inputs.project }}' \
+          --project '${{ github.event.inputs.project_id }}' \
           --token '${{ env.PORT_TOKEN }}' \
           --ttl '${{ github.event.inputs.ttl }}' \
           --triggered_by '${{ github.event.inputs.triggered_by }}' \
