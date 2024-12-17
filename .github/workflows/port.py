@@ -51,7 +51,7 @@ def post_log(port_context, message, token):
 def create_environment(project: str = '', token: str = '', ttl: str = '', triggered_by: str = ''):
 #     """
 #     Create an environment entity in Port.
-
+    logging.info(f"Bearer {token}")
     url = f"{PORT_API_URL}/blueprints/environment/entities"
     headers = {
         "Content-Type": "application/json",
