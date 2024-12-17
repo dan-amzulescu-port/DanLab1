@@ -9,9 +9,6 @@ on:
       requires_ec_2:
         description: "Does this workflow require EC2?"
         required: true
-      project:
-        description: "Project name"
-        required: true
       ttl:
         description: "Time to live (TTL) for the environment"
         required: true
@@ -25,9 +22,14 @@ on:
         description: "EC2_Size"
         required: false
       triggered_by:
-        description: "EC2_Size"
+        description: "triggered_by"
         required: false
-
+      runId:
+        description: "runId"
+        required: false
+      project_identifier:
+        description: "project_identifier"
+        required: false
 jobs:
   setup:
     runs-on: ubuntu-latest
