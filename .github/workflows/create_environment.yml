@@ -57,9 +57,9 @@ jobs:
     - name: Create environment
       run: |
         echo "----printing context-----"
-        echo '${{ github.event.inputs.port_context }}'
+        echo '${{ github.event.inputs.project_identifier }}'
         echo "----printing context-----"
-        echo '${{ github.event.inputs.port_context.project_identifier }}'
+        echo '${{ github.event.inputs.triggered_by }}'
         echo "----printing context-----"
         python .github/workflows/create_environment.py create_environment \
           --project '${{ github.event.inputs.project_identifier }}' \
