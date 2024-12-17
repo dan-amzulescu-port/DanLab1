@@ -59,7 +59,6 @@ jobs:
           --client_secret "${{ secrets.PORT_CLIENT_SECRET }}")
         echo "----printing TOKEN1-----"
         echo "token='$TOKEN'"       
-        echo "##[set-env name=TOKEN]$TOKEN"
         echo "----printing TOKEN2-----"
         echo "PORT_TOKEN: '${{ env.PORT_TOKEN }}'"
         echo "----printing env-----"
