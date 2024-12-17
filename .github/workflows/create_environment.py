@@ -1,8 +1,8 @@
 import logging
 from args_setup import (print_inputs_args, get_token_args, post_log_args, create_environment_args,
-                        create_cloud_resource_args)
+                        create_ec2_args, create_s3_args)
 
-from port import get_token, post_log, create_environment, create_cloud_resource
+from port import get_token, post_log, create_environment, create_ec2_cloud_resource, create_s3_cloud_resource
 from args_parser import ArgsParser
 
 # Configure logging

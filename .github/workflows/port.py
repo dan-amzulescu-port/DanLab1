@@ -112,3 +112,30 @@ def create_ec2_cloud_resource(project, resource_type, token):
 
     if response:
         logging.info("Successfully created cloud resource: %s", data["identifier"])
+
+def create_s3_cloud_resource(project, resource_type, token):
+    """
+    Create a cloud resource entity in Port.
+    """
+    url = f"{PORT_API_URL}/blueprints/cloudResource/entities"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}"
+    }
+    data = {
+        "identifier": f"{resource_type}_{os.urandom(4).hex()}",
+        "title": f"{resource_type.capitalize()} Resource",
+        "properties": {
+            "kind": resource_type,
+            "region": "us-east-1",  # Example region
+            "status": "provisioning"
+        },
+        "relations": {
+            "environment": [project]
+        }
+    }
+
+    response = send_post_request(url, headers, data)
+
+    if response:
+        logging.info("Successfully created cloud resource: %s", data["identifier"])
