@@ -4,7 +4,8 @@ import json
 
 import requests
 from constants import PORT_API_URL
-from helper import calculate_time_delta
+from helper import calculate_time_delta, get_port_context
+
 
 def send_post_request(url, headers, data):
     """
@@ -26,6 +27,9 @@ def get_token(client_id, client_secret):
     url = f"{PORT_API_URL}/auth/access_token"
     data = {"clientId": client_id, "clientSecret": client_secret}
     response = send_post_request(url, {"Content-Type": "application/json"}, data)
+
+    logging.info(f"loading context from os.environ['GITHUB_ENV']")
+    logging.info(f"context ={get_port_context()}")
 
     if response is None:
         return None

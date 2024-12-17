@@ -1,6 +1,29 @@
+import json
+import os
 from datetime import datetime, timedelta
 import pytz
 
+def get_port_context():
+  """
+  Retrieves the PORT_CONTEXT from the GITHUB_ENV environment variable.
+
+  Returns:
+    The PORT_CONTEXT as a dictionary, or None if the environment variable is not set.
+  """
+  try:
+    with open(os.environ['GITHUB_ENV'], 'r') as f:
+      for line in f:
+        key, value = line.strip().split('=', 1)
+        if key == 'PORT_CONTEXT':
+          try:
+            return json.loads(value)
+          except json.JSONDecodeError:
+            print(f"Error: Invalid JSON for PORT_CONTEXT: {value}")
+            return None
+  except FileNotFoundError:
+    print(f"Error: GITHUB_ENV file not found.")
+    return None
+  return None
 
 def calculate_time_delta(time_input: str) -> str:
     """

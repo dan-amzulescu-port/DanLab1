@@ -3,6 +3,9 @@ name: Environment Setup Workflow
 on:
   workflow_dispatch:
     inputs:
+      port_context:
+            description: "Port context"
+            required: true
       requires_s_3:
         description: "Does this workflow require S3?"
         required: true
@@ -50,6 +53,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r .github/workflows/requirements.txt
+        echo "PORT_CONTEXT='${{ github.event.inputs.port_context }}'" >> $GITHUB_ENV
 
     - name: Get token
       id: get_token
