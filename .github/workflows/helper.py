@@ -19,7 +19,7 @@ def calculate_time_delta(time_input: str) -> str:
     - "Indefinite"
     """
     # Get current time in UTC
-    current_time = datetime.now(pytz.UTC)
+    current_time = datetime.now(pytz.UTC).replace(microsecond=0)
 
     # Parse and add time delta
     if time_input == "1 Day":
