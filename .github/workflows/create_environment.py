@@ -56,7 +56,8 @@ def add_arguments_for_commands(subparsers):
     # Subcommand: create_environment
     create_environment_args(subparsers)
     # Subcommand: create_cloud_resource
-    create_cloud_resource_args(subparsers)
+    create_ec2_args(subparsers)
+    create_s3_args(subparsers)
 
 
 if __name__ == "__main__":
