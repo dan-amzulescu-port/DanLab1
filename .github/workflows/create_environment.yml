@@ -61,10 +61,11 @@ jobs:
         TOKEN_ENC=$(echo -n "$TOKEN" | base64)
         echo "TOKEN_ENC=$TOKEN_ENC"
         echo "2"
-        DECODED_TOKEN=$(echo "TOKEN_ENC" | base64 -d)
+        DECODED_TOKEN=$(echo "$TOKEN_ENC" | base64 -d)
         echo "3"
-        echo "DECODED_TOKEN=DECODED_TOKEN"
+        echo "DECODED_TOKEN=$DECODED_TOKEN"
         echo "4"
+        echo "TOKEN=$DECODED_TOKEN" >> $GITHUB_ENV
 
     - name: Create environment
       run: |
