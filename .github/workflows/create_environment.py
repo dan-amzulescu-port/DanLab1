@@ -24,7 +24,7 @@ def main():
     add_arguments_for_commands(args_parser.subparsers)
     args = args_parser.parser.parse_args()
 
-    print (execute_command(args))
+    execute_command(args)
 
 
 
@@ -35,7 +35,7 @@ def execute_command(args):
         case "get_token":
             return get_token(args.client_id, args.client_secret)
         case "post_log":
-            post_log(args.port_context, args.message, args.token)
+            post_log(args.message, args.token, args.run_id)
         case "create_environment":
             return create_environment(args.project, args.token, args.ttl, args.triggered_by)
         case "create_ec2_cloud_resource":
