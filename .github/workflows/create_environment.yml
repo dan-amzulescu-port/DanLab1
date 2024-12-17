@@ -62,7 +62,6 @@ jobs:
         echo "----printing TOKEN2-----"
         echo "PORT_TOKEN: '${{ env.PORT_TOKEN }}'"
         echo "----printing env-----"
-        env
 
     - name: Create environment
       run: |

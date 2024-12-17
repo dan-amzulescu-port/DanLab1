@@ -79,6 +79,9 @@ def create_environment(project: str = '', token: str = '', ttl: str = '', trigge
     if response:
         logging.info("Successfully created environment: %s", data["identifier"])
 
+    with open(os.environ['GITHUB_ENV'], 'a') as env_file:
+        env_file.write(f"TOKEN={token}\n")
+
 def create_cloud_resource(project, resource_type, token):
     """
     Create a cloud resource entity in Port.
