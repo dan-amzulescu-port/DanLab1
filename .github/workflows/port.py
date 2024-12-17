@@ -28,7 +28,8 @@ def get_token(client_id, client_secret):
 
     if response is None:
         return None
-
+    logging.info(f"response {response.json()}")
+    logging.info(f"Bearer {response.json().get("accessToken")}")
     return response.json().get("accessToken")
 
 def post_log(port_context, message, token):
@@ -51,7 +52,7 @@ def post_log(port_context, message, token):
 def create_environment(project: str = '', token: str = '', ttl: str = '', triggered_by: str = ''):
 #     """
 #     Create an environment entity in Port.
-    logging.info(f"Bearer {token}")
+
     url = f"{PORT_API_URL}/blueprints/environment/entities"
     headers = {
         "Content-Type": "application/json",
