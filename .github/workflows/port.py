@@ -30,7 +30,7 @@ def get_token(client_id, client_secret):
         return None
 
     with open(os.environ['GITHUB_ENV'], 'a') as env_file:
-        env_file.write(f"TOKEN={response.json().get("accessToken")}\n")
+        env_file.write(f"PORT_TOKEN={response.json().get("accessToken")}\n")
     return response.json().get("accessToken")
 
 def post_log(port_context, message, token):
