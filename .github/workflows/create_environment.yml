@@ -58,9 +58,12 @@ jobs:
           --client_id "${{ secrets.PORT_CLIENT_ID }}" \
           --client_secret "${{ secrets.PORT_CLIENT_SECRET }}")
         echo "----printing TOKEN1-----"
-        echo $TOKEN
-        echo "----printing TOKEN2-----"
+        echo $TOKEN       
         echo "PORT_TOKEN=$TOKEN" >> $GITHUB_ENV
+        echo "----printing TOKEN2-----"
+        echo "##[echo]PORT_TOKEN: ${{ env.PORT_TOKEN }}"
+        echo "----printing env-----"
+        env
 
     - name: Create environment
       run: |
