@@ -86,7 +86,7 @@ def create_environment(project: str = '', token: str = '', ttl: str = '', trigge
         logging.info(f"Successfully created environment e_id: {response.json()["entity"]["identifier"]}")
 
 
-def create_cloud_resource(project, resource_type, token):
+def create_ec2_cloud_resource(project, resource_type, token):
     """
     Create a cloud resource entity in Port.
     """

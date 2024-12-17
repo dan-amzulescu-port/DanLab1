@@ -1,13 +1,3 @@
-def create_cloud_resource_args(subparsers):
-    create_resource_parser = subparsers.add_parser("create_cloud_resource")
-    create_resource_parser.add_argument("--requires_s3", required=True, help="Does this workflow require S3?")
-    create_resource_parser.add_argument("--requires_ec2", required=True, help="Does this workflow require EC2?")
-    create_resource_parser.add_argument("--EC2_Size", required=True, help="EC2_Size")
-    create_resource_parser.add_argument("--prefix", required=True, help="S3 Prefix")
-    create_resource_parser.add_argument("--project", required=True, help="Project name")
-    create_resource_parser.add_argument("--resource_type", required=True, help="Type of cloud resource (e.g., s3, ec2)")
-    create_resource_parser.add_argument("--token", required=True, help="PORT JWT token")
-
 def create_s3_args(subparsers):
     create_resource_parser = subparsers.add_parser("create_s3_cloud_resource")
     create_resource_parser.add_argument("--prefix", required=True, help="S3 Prefix")

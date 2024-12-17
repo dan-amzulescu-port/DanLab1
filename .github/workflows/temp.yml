@@ -37,3 +37,15 @@
           --project '${{ github.event.inputs.project }}' \
           --resource_type 'ec2' \
           --token "${{ env.PORT_TOKEN }}"
+
+    - name: Create S3 resource (if required)
+      run: |
+        python .github/workflows/create_environment.py create_cloud_resource \
+          --requires_s3 '${{ github.event.inputs.project_id }}' \
+          --requires_ec2 '${{ env.PORT_TOKEN }}' \
+          --project '${{ github.event.inputs.ttl }}' \
+          --token '${{ github.event.inputs.triggered_by }}'
+        python .github/workflows/create_environment.py post_log \
+          --message '✅ Environment successfully created! 🥳 Ready to deploy 🚀' \
+          --token '${{ env.PORT_TOKEN }}' \
+          --run_id '${{ github.event.inputs.runId }}'
