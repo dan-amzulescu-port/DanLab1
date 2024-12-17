@@ -59,14 +59,12 @@ jobs:
           --client_secret "${{ secrets.PORT_CLIENT_SECRET }}")
         echo "1"
         TOKEN_ENC=$(echo -n "TOKEN" | base64)
+        echo "TOKEN_ENC=$TOKEN_ENC"
         echo "2"
         DECODED_TOKEN=$(echo "TOKEN_ENC" | base64 -d)
-        echo "decoded=$DECODED_TOKEN"
-        
-        echo "Base64 token1: $DECODED_TOKEN"
-        echo "----printing TOKEN(env)-----"
-        echo "PORT_TOKEN: '${{ env.PORT_TOKEN }}'"
-        echo "----printing env-----"
+        echo "3"
+        echo "DECODED_TOKEN=DECODED_TOKEN"
+        echo "4"
 
     - name: Create environment
       run: |
