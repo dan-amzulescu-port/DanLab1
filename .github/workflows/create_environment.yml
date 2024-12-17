@@ -64,7 +64,7 @@ jobs:
         echo '${{ github.event.inputs.triggered_by }}'
         echo "----printing context-----"
         python .github/workflows/create_environment.py create_environment \
-          --project '${{ github.event.inputs.project_identifier }}' \
+          --project '${{ github.event.inputs.project }}' \
           --token '${{ env.PORT_TOKEN }}' \
           --ttl '${{ github.event.inputs.ttl }}' \
           --triggered_by '${{ github.event.inputs.triggered_by }}' \
