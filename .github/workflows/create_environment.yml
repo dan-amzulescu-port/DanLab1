@@ -57,7 +57,9 @@ jobs:
         TOKEN=$(python .github/workflows/create_environment.py get_token \
           --client_id "${{ secrets.PORT_CLIENT_ID }}" \
           --client_secret "${{ secrets.PORT_CLIENT_SECRET }}")
+        echo "----printing TOKEN1-----"
         echo $TOKEN
+        echo "----printing TOKEN2-----"
         echo "PORT_TOKEN=$TOKEN" >> $GITHUB_ENV
 
     - name: Create environment
