@@ -3,9 +3,6 @@ name: Environment Setup Workflow
 on:
   workflow_dispatch:
     inputs:
-      port_context:
-        description: "Port context in JSON format"
-        required: true
       requires_s_3:
         description: "Does this workflow require S3?"
         required: true
@@ -25,6 +22,9 @@ on:
         description: "prefix"
         required: false
       EC2_Size:
+        description: "EC2_Size"
+        required: false
+      triggered_by:
         description: "EC2_Size"
         required: false
 
