@@ -13,7 +13,7 @@ def send_post_request(url, headers, data):
     """
     response = requests.post(url, headers=headers, json=data)
 
-    if response.status_code != 200 or response.status_code != 201:
+    if response.status_code != 200 and response.status_code != 201:
         logging.info("response.status_code: %s", response.status_code)
         logging.error("Failed to send POST request: %s", response.text)
         return None
