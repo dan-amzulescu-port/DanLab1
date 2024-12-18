@@ -32,7 +32,10 @@ def get_token(client_id, client_secret):
     logging.info(f"Type of env_input: {type(env_input)}")
     first_parse = json.loads(env_input)
     logging.info(f"Type of first_parse: {type(first_parse)}")
-    
+    if isinstance(first_parse, str):
+        parsed_input = json.loads(first_parse)
+        logging.info(f"Type of second_parse: {type(first_parse)}")
+
     logging.info(f"JSON_INPUT: {env_input}")
     parsed_input = json.loads(env_input)
     logging.info(f'{parsed_input["inputs"]["requires_s3"]}')
