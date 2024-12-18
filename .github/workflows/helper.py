@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from datetime import datetime, timedelta
 import pytz
@@ -18,10 +19,10 @@ def get_port_context():
           try:
             return json.loads(value)
           except json.JSONDecodeError:
-            print(f"Error: Invalid JSON for PORT_CONTEXT: {value}")
+            logging.error(f"Error: Invalid JSON for PORT_CONTEXT: {value}")
             return None
   except FileNotFoundError:
-    print(f"Error: GITHUB_ENV file not found.")
+    logging.error(f"Error: GITHUB_ENV file not found.")
     return None
   return None
 
