@@ -12,7 +12,8 @@ def get_port_context():
     The PORT_CONTEXT as a dictionary, or None if the environment variable is not set.
   """
   try:
-    with open(os.environ['GITHUB_ENV'], 'r') as f:
+
+    with open(os.environ['PORT_CONTEXT'], 'r') as f:
       for line in f:
         key, value = line.strip().split('=', 1)
         logging.info(f"key:value found: {key}:{value}")
