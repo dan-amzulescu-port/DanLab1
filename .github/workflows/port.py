@@ -28,9 +28,9 @@ def get_token(client_id, client_secret):
     data = {"clientId": client_id, "clientSecret": client_secret}
     response = send_post_request(url, {"Content-Type": "application/json"}, data)
 
-    env_port_context = os.environ.get('ENV_PORT_CONTEXT', None).strip('"').replace('\\"', '"')
-
-    logging.info(f"value of cleaned_input: {env_port_context["inputs"]["requires_s_3"]}")
+    env_port_context = os.environ.get('ENV_PORT_CONTEXT', None)
+    context_input = env_port_context.strip('"').replace('\\"', '"')
+    logging.info(f"context_input: {type(context_input)}:{context_input}")
 
     if response is None:
         return None
