@@ -27,9 +27,8 @@ def get_token(client_id, client_secret):
     url = f"{PORT_API_URL}/auth/access_token"
     data = {"clientId": client_id, "clientSecret": client_secret}
     response = send_post_request(url, {"Content-Type": "application/json"}, data)
-
-    logging.info(f"loading context from os.environ['GITHUB_ENV']")
-    logging.info(f"context = {get_port_context()}")
+    port_context = get_port_context()
+    logging.info(f"context inputs= {port_context['inputs']}")
 
     if response is None:
         return None

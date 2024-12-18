@@ -36,11 +36,11 @@ def get_port_context():
     """
     try:
         port_context = os.environ['PORT_CONTEXT']  # Get the raw string
-        logging.info(f"Raw PORT_CONTEXT: {port_context}")
+        logging.debug(f"Raw PORT_CONTEXT: {port_context}")
 
         # Attempt to sanitize the input
         sanitized_port_context = sanitize_to_json(port_context)
-        logging.info(f"Sanitized PORT_CONTEXT: {sanitized_port_context}")
+        logging.debug(f"Sanitized PORT_CONTEXT: {sanitized_port_context}")
 
         # Parse sanitized JSON
         return json.loads(sanitized_port_context)
