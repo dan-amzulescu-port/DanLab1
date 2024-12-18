@@ -16,22 +16,27 @@ def sanitize_to_json(raw_context: str) -> str:
     Returns:
         str: A valid JSON string.
     """
-    # Remove the single quotes wrapping the entire string
+    # Remove single quotes wrapping the entire string
     if raw_context.startswith("'") and raw_context.endswith("'"):
         raw_context = raw_context[1:-1]
 
     # Replace single quotes with double quotes
     sanitized = raw_context.replace("'", '"')
 
-    # Enclose keys with double quotes
+    # Enclose unquoted keys and values with double quotes
     sanitized = re.sub(r'(\b[a-zA-Z0-9_]+\b):', r'"\1":', sanitized)
+    sanitized = re.sub(r':\s*([a-zA-Z0-9_.+-]+)', r': "\1"', sanitized)
 
-    # Ensure "null", "true", and "false" are properly formatted
-    sanitized = sanitized.replace(":null", ": null")
-    sanitized = sanitized.replace(":true", ": true")
-    sanitized = sanitized.replace(":false", ": false")
+    # Correct specific JSON formatting issues
+    sanitized = sanitized.replace(': "true"', ': true')
+    sanitized = sanitized.replace(': "false"', ': false')
+    sanitized = sanitized.replace(': "null"', ': null')
+
+    # Ensure properly formatted date strings
+    sanitized = re.sub(r'"([0-9]{4}-[0-9]{2}-[0-9]{2})-([0-9T:.Z]+)"', r'"\1T\2"', sanitized)
 
     return sanitized
+
 
 
 
@@ -56,7 +61,7 @@ def get_port_context():
 
         # Parse JSON
         parsed_port_context = json.loads(sanitized_port_context)
-        logging.info(f"PORT_CONTEXT type before returning: {type(parsed_port_context)}")
+        logging.info(f"Parsed PORT_CONTEXT: {parsed_port_context}")
         return parsed_port_context
     except json.JSONDecodeError as e:
         logging.error(f"Invalid JSON format in PORT_CONTEXT: {e}")
