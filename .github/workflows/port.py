@@ -29,7 +29,7 @@ def get_token(client_id, client_secret):
     response = send_post_request(url, {"Content-Type": "application/json"}, data)
 
     logging.info(f"loading context from os.environ['GITHUB_ENV']")
-    logging.info(f"context ={get_port_context()}")
+    logging.info(f"context = {get_port_context()}")
 
     if response is None:
         return None

@@ -15,6 +15,7 @@ def get_port_context():
     with open(os.environ['GITHUB_ENV'], 'r') as f:
       for line in f:
         key, value = line.strip().split('=', 1)
+        logging.info(f"key:value found: {key}:{value}")
         if key == 'PORT_CONTEXT':
           try:
             logging.info(f"PORT_CONTEXT found: {value}")
