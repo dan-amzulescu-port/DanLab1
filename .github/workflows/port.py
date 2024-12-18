@@ -28,30 +28,12 @@ def get_token(client_id, client_secret):
     data = {"clientId": client_id, "clientSecret": client_secret}
     response = send_post_request(url, {"Content-Type": "application/json"}, data)
 
-    env_input = os.environ.get('JSON_INPUT')
-    logging.info(f"Type of env_input: {type(env_input)} ->  {env_input}")
-    cleaned_input = env_input.strip('"').replace('\\"', '"')
-    logging.info(f"Type of cleaned_input: {type(cleaned_input)} ->  {cleaned_input}")
-    cleaned_jsoned_input = json.loads(cleaned_input)
-    logging.info(f"Type of cleaned_input: {type(cleaned_jsoned_input)} ->  {cleaned_jsoned_input}")
-    '''
-    port_context = get_port_context()
+    env_port_context = os.environ.get('ENV_PORT_CONTEXT', None).strip('"').replace('\\"', '"')
 
-    logging.info(f"PORT_CONTEXT: {port_context}")
-    if isinstance(port_context, dict):
-        if 'inputs' in port_context:
-            logging.info(f"context inputs = {port_context['inputs']}")
-        else:
-            logging.error("'inputs' key is missing in PORT_CONTEXT.")
-    else:
-        logging.error("PORT_CONTEXT is not a valid dictionary.")
+    logging.info(f"value of cleaned_input: {env_port_context["inputs"]["requires_s_3"]}")
 
     if response is None:
         return None
-
-    with open(os.environ['GITHUB_ENV'], 'a') as env_file:
-        env_file.write(f"PORT_TOKEN={response.json().get("accessToken")}\n")
-    '''
     return response.json().get("accessToken")
 
 def post_log(message, token, run_id):
