@@ -35,6 +35,7 @@ jobs:
       id: get_token
       env:
         PORT_CONTEXT: ${{ env.PORT_CONTEXT }}
+        JSON_INPUT: ${{ toJson(inputs.port_context) }}
       run: |
         python .github/workflows/create_environment.py get_token \
           --client_id "${{ secrets.PORT_CLIENT_ID }}" \

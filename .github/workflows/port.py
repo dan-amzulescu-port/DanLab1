@@ -27,7 +27,12 @@ def get_token(client_id, client_secret):
     url = f"{PORT_API_URL}/auth/access_token"
     data = {"clientId": client_id, "clientSecret": client_secret}
     response = send_post_request(url, {"Content-Type": "application/json"}, data)
+
+    env_input = os.environ.get('JSON_INPUT')
+    logging.info(f"JSON_INPUT: {env_input}")
+
     port_context = get_port_context()
+
     logging.info(f"PORT_CONTEXT: {port_context}")
     if isinstance(port_context, dict):
         if 'inputs' in port_context:
