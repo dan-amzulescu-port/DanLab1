@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       port_context:
-            description: "Port context"
-            required: true
+          description: "Port context"
+          required: true
       requires_s_3:
         description: "Does this workflow require S3?"
         required: true
@@ -15,9 +15,6 @@ on:
       ttl:
         description: "Time to live (TTL) for the environment"
         required: true
-      required_v_cluster:
-        description: "Do we require vCluster"
-        required: false
       prefix:
         description: "prefix"
         required: false
