@@ -28,7 +28,14 @@ def get_token(client_id, client_secret):
     data = {"clientId": client_id, "clientSecret": client_secret}
     response = send_post_request(url, {"Content-Type": "application/json"}, data)
     port_context = get_port_context()
-    logging.info(f"context inputs= {port_context['inputs']}")
+    logging.info(f"PORT_CONTEXT: {port_context}")
+    if isinstance(port_context, dict):
+        if 'inputs' in port_context:
+            logging.info(f"context inputs = {port_context['inputs']}")
+        else:
+            logging.error("'inputs' key is missing in PORT_CONTEXT.")
+    else:
+        logging.error("PORT_CONTEXT is not a valid dictionary.")
 
     if response is None:
         return None
