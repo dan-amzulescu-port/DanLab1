@@ -33,6 +33,8 @@ jobs:
 
     - name: Get Port JWT token
       id: get_token
+      env:
+        PORT_CONTEXT: ${{ env.PORT_CONTEXT }}
       run: |
         python .github/workflows/create_environment.py get_token \
           --client_id "${{ secrets.PORT_CLIENT_ID }}" \
