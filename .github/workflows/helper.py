@@ -1,30 +1,32 @@
 import json
 import logging
 import os
+import re
 from datetime import datetime, timedelta
 import pytz
 
-def sanitize_to_json(input_string: str) -> str:
+def sanitize_to_json(raw_context: str) -> str:
     """
-    Attempts to sanitize a malformed JSON-like string into valid JSON format.
+    Converts a malformed JSON-like string into valid JSON.
 
     Args:
-        input_string (str): The input string to sanitize.
+        raw_context (str): The malformed JSON-like string.
 
     Returns:
-        str: A sanitized JSON string.
+        str: A valid JSON string.
     """
-    try:
-        # Replace single quotes with double quotes and fix JSON-like syntax issues
-        sanitized_string = (
-            input_string
-            .replace("'", '"')  # Replace single quotes with double quotes
-            .replace(": ", ":")  # Remove extra spaces after colons
-        )
-        return sanitized_string
-    except Exception as e:
-        logging.error(f"Error sanitizing string: {e}")
-        return input_string
+    # Replace single quotes with double quotes
+    sanitized = raw_context.replace("'", '"')
+
+    # Enclose keys with double quotes
+    sanitized = re.sub(r'(\b[a-zA-Z0-9_]+\b):', r'"\1":', sanitized)
+
+    # Ensure "null", "true", and "false" are properly formatted
+    sanitized = sanitized.replace(":null", ": null")
+    sanitized = sanitized.replace(":true", ": true")
+    sanitized = sanitized.replace(":false", ": false")
+
+    return sanitized
 
 
 def get_port_context():
