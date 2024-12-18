@@ -30,6 +30,10 @@ def get_token(client_id, client_secret):
 
     env_input = os.environ.get('JSON_INPUT')
     logging.info(f"Type of env_input: {type(env_input)} ->  {env_input}")
+    cleaned_input = env_input.strip('"').replace('\\"', '"')
+    logging.info(f"Type of env_input: {type(cleaned_input)} ->  {cleaned_input}")
+    # Parse the cleaned input
+    parsed_input = json.loads(cleaned_input)
     first_parse = json.loads(env_input)
     logging.info(f"Type of first_parse: {type(first_parse)} -> {first_parse}")
     if isinstance(first_parse, str):
