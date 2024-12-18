@@ -17,6 +17,7 @@ def get_port_context():
         key, value = line.strip().split('=', 1)
         if key == 'PORT_CONTEXT':
           try:
+            logging.info(f"PORT_CONTEXT found: {value}")
             return json.loads(value)
           except json.JSONDecodeError:
             logging.error(f"Error: Invalid JSON for PORT_CONTEXT: {value}")

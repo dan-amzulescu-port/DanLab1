@@ -1,3 +1,32 @@
+      requires_s_3:
+        description: "Does this workflow require S3?"
+        required: true
+      requires_ec_2:
+        description: "Does this workflow require EC2?"
+        required: true
+      ttl:
+        description: "Time to live (TTL) for the environment"
+        required: true
+      prefix:
+        description: "prefix"
+        required: false
+      EC2_Size:
+        description: "EC2_Size"
+        required: false
+      triggered_by:
+        description: "triggered_by"
+        required: false
+      runId:
+        description: "runId"
+        required: false
+      project:
+        description: "project"
+        required: false
+      project_id:
+        description: "project_identifier"
+        required: false
+
+
     - name: Print inputs
       run: |
         python .github/workflows/create_environment.py print_inputs \
