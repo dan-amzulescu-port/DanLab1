@@ -31,19 +31,10 @@ def get_token(client_id, client_secret):
     env_input = os.environ.get('JSON_INPUT')
     logging.info(f"Type of env_input: {type(env_input)} ->  {env_input}")
     cleaned_input = env_input.strip('"').replace('\\"', '"')
-    logging.info(f"Type of env_input: {type(cleaned_input)} ->  {cleaned_input}")
-    # Parse the cleaned input
-    parsed_input = json.loads(cleaned_input)
-    first_parse = json.loads(env_input)
-    logging.info(f"Type of first_parse: {type(first_parse)} -> {first_parse}")
-    if isinstance(first_parse, str):
-        parsed_input = json.loads(first_parse)
-        logging.info(f"Type of second_parse: {type(first_parse)} -> {parsed_input}")
-
-    logging.info(f"JSON_INPUT: {env_input}")
-    parsed_input = json.loads(env_input)
-    logging.info(f'{parsed_input["inputs"]["requires_s3"]}')
-
+    logging.info(f"Type of cleaned_input: {type(cleaned_input)} ->  {cleaned_input}")
+    cleaned_jsoned_input = json.loads(cleaned_input)
+    logging.info(f"Type of cleaned_input: {type(cleaned_jsoned_input)} ->  {cleaned_jsoned_input}")
+    '''
     port_context = get_port_context()
 
     logging.info(f"PORT_CONTEXT: {port_context}")
@@ -60,6 +51,7 @@ def get_token(client_id, client_secret):
 
     with open(os.environ['GITHUB_ENV'], 'a') as env_file:
         env_file.write(f"PORT_TOKEN={response.json().get("accessToken")}\n")
+    '''
     return response.json().get("accessToken")
 
 def post_log(message, token, run_id):
