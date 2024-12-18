@@ -4,6 +4,29 @@ import os
 from datetime import datetime, timedelta
 import pytz
 
+def sanitize_to_json(input_string: str) -> str:
+    """
+    Attempts to sanitize a malformed JSON-like string into valid JSON format.
+
+    Args:
+        input_string (str): The input string to sanitize.
+
+    Returns:
+        str: A sanitized JSON string.
+    """
+    try:
+        # Replace single quotes with double quotes and fix JSON-like syntax issues
+        sanitized_string = (
+            input_string
+            .replace("'", '"')  # Replace single quotes with double quotes
+            .replace(": ", ":")  # Remove extra spaces after colons
+        )
+        return sanitized_string
+    except Exception as e:
+        logging.error(f"Error sanitizing string: {e}")
+        return input_string
+
+
 def get_port_context():
     """
     Retrieves the PORT_CONTEXT from the environment variable.
@@ -12,14 +35,20 @@ def get_port_context():
         The PORT_CONTEXT as a dictionary, or None if the environment variable is not set or invalid.
     """
     try:
-        port_context = os.environ['PORT_CONTEXT']  # Get the JSON string from the environment
-        logging.info(f"PORT_CONTEXT loaded: {port_context}")
-        return json.loads(port_context)  # Parse the JSON string
+        port_context = os.environ['PORT_CONTEXT']  # Get the raw string
+        logging.info(f"Raw PORT_CONTEXT: {port_context}")
+
+        # Attempt to sanitize the input
+        sanitized_port_context = sanitize_to_json(port_context)
+        logging.info(f"Sanitized PORT_CONTEXT: {sanitized_port_context}")
+
+        # Parse sanitized JSON
+        return json.loads(sanitized_port_context)
     except KeyError:
         logging.error("PORT_CONTEXT environment variable is not set.")
         return None
-    except json.JSONDecodeError:
-        logging.error("Invalid JSON format in PORT_CONTEXT.")
+    except json.JSONDecodeError as e:
+        logging.error(f"Invalid JSON format in PORT_CONTEXT: {e}")
         return None
 
 def calculate_time_delta(time_input: str) -> str:
