@@ -5,6 +5,7 @@ import re
 from datetime import datetime, timedelta
 import pytz
 
+
 def sanitize_to_json(raw_context: str) -> str:
     """
     Converts a malformed JSON-like string into valid JSON.
@@ -15,6 +16,10 @@ def sanitize_to_json(raw_context: str) -> str:
     Returns:
         str: A valid JSON string.
     """
+    # Remove the single quotes wrapping the entire string
+    if raw_context.startswith("'") and raw_context.endswith("'"):
+        raw_context = raw_context[1:-1]
+
     # Replace single quotes with double quotes
     sanitized = raw_context.replace("'", '"')
 
@@ -29,28 +34,35 @@ def sanitize_to_json(raw_context: str) -> str:
     return sanitized
 
 
+
 def get_port_context():
     """
     Retrieves the PORT_CONTEXT from the environment variable.
 
     Returns:
-        The PORT_CONTEXT as a dictionary, or None if the environment variable is not set or invalid.
+        dict: The PORT_CONTEXT as a dictionary, or None if the environment variable is not set or invalid.
     """
     try:
-        port_context = os.environ['PORT_CONTEXT']  # Get the raw string
-        logging.debug(f"Raw PORT_CONTEXT: {port_context}")
+        port_context_raw = os.environ.get('PORT_CONTEXT', None)
+        if not port_context_raw:
+            logging.error("PORT_CONTEXT environment variable is not set or empty.")
+            return None
 
-        # Attempt to sanitize the input
-        sanitized_port_context = sanitize_to_json(port_context)
-        logging.debug(f"Sanitized PORT_CONTEXT: {sanitized_port_context}")
+        logging.info(f"Raw PORT_CONTEXT: {port_context_raw}")
 
-        # Parse sanitized JSON
-        return json.loads(sanitized_port_context)
-    except KeyError:
-        logging.error("PORT_CONTEXT environment variable is not set.")
-        return None
+        # Sanitize the malformed JSON
+        sanitized_port_context = sanitize_to_json(port_context_raw)
+        logging.info(f"Sanitized PORT_CONTEXT: {sanitized_port_context}")
+
+        # Parse JSON
+        parsed_port_context = json.loads(sanitized_port_context)
+        logging.info(f"PORT_CONTEXT type before returning: {type(parsed_port_context)}")
+        return parsed_port_context
     except json.JSONDecodeError as e:
         logging.error(f"Invalid JSON format in PORT_CONTEXT: {e}")
+        return None
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
         return None
 
 def calculate_time_delta(time_input: str) -> str:
