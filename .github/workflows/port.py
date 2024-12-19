@@ -38,7 +38,9 @@ def get_port_token(client_id:str = "", client_secret:str = "") -> Optional[str]:
 
 
 def get_env_var_context():
-    return json.loads(os.getenv('PORT_CONTEXT', None).strip('"').replace('\\"', '"'))
+    port_context = os.getenv('PORT_CONTEXT', None)
+    logging.info(f"-----------port_context: {port_context}")
+    return json.loads(port_context.strip('"').replace('\\"', '"'))
 
 
 def post_log(message, token="", run_id=""):
