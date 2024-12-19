@@ -33,7 +33,7 @@ def get_port_token(client_id:str = "", client_secret:str = "") -> Optional[str]:
     if client_id_from_env != client_id:
         logging.error("client_id_from_env != client_id")
         if client_secret_from_env != client_secret:
-            logging.error("client_secret_from_env != client_secre")
+            logging.error("client_secret_from_env != client_secret")
         return None
 
     encoded_data = base64.b64encode(client_id.encode('utf-8')).decode('utf-8')
