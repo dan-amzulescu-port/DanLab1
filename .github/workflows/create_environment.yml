@@ -23,8 +23,6 @@ jobs:
     - name: Set Env Variables
       run: |
         echo "PORT_CONTEXT='${{ toJson(github.event.inputs.port_context) }}'" >> $GITHUB_ENV
-        echo "PORT_CLIENT_ID='${{ secrets.PORT_CLIENT_ID }}'" >> $GITHUB_ENV
-        echo "PORT_CLIENT_SECRET='${{ secrets.PORT_CLIENT_SECRET }}'" >> $GITHUB_ENV
 
     - name: Install dependencies
       run: |
@@ -38,11 +36,11 @@ jobs:
             --client_id "${{ secrets.PORT_CLIENT_ID }}" \
             --client_secret "${{ secrets.PORT_CLIENT_SECRET }}"
 
-#    - name: Create environment
-#      id: create_environment
-#      env:
-#        ENV_PORT_CONTEXT: ${{ toJson(inputs.port_context) }}
-#      run: |
-#          python .github/workflows/create_environment.py create_environment
-#          python .github/workflows/create_environment.py post_log \
-#            --message '✅ Environment successfully created! 🥳 Ready to deploy 🚀'
+    - name: Create environment
+      id: create_environment
+      env:
+        ENV_PORT_CONTEXT: ${{ toJson(inputs.port_context) }}
+      run: |
+          python .github/workflows/create_environment.py create_environment
+          python .github/workflows/create_environment.py post_log \
+            --message '✅ Environment successfully created! 🥳 Ready to deploy 🚀'

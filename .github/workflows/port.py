@@ -23,33 +23,17 @@ def send_post_request(url, headers, data):
     return response
 
 
-def get_port_token(client_id:str = "a", client_secret:str = "a") -> Optional[str]:
+def get_port_token(client_id:str = "", client_secret:str = "") -> Optional[str]:
     """
     Retrieve the PORT JWT Token using the provided client credentials.
     """
     url = f"{PORT_API_URL}/auth/access_token"
-    client_id_from_env = os.environ.get('PORT_CLIENT_ID', None)
-    client_secret_from_env = os.environ.get('PORT_CLIENT_SECRET', None)
-    if client_id_from_env != client_id:
-        logging.error(f"client_id_from_env({base64.b64encode(client_id_from_env.encode('utf-8')).decode('utf-8')}) != "
-                      f"client_id({base64.b64encode(client_id.encode('utf-8')).decode('utf-8')})")
-        if client_secret_from_env != client_secret:
-            logging.error(f"client_secret_from_env({base64.b64encode(client_secret_from_env.encode('utf-8')).decode('utf-8')}) != "
-                      f"client_secret({base64.b64encode(client_secret.encode('utf-8')).decode('utf-8')})")
-        return None
-
-    encoded_data = base64.b64encode(client_id.encode('utf-8')).decode('utf-8')
-    logging.info(f"PORT_CLIENT_ID(len): {len(client_id)} - {encoded_data}")
-    client_secret = os.environ.get('PORT_CLIENT_SECRET', None)
-
-    encoded_data = base64.b64encode(client_secret.encode('utf-8')).decode('utf-8')
-    logging.info(f"PORT_CLIENT_SECRET(len): {len(client_secret)} - {encoded_data}")
 
     data = {"clientId": client_id, "clientSecret": client_secret}
     response = send_post_request(url, {"Content-Type": "application/json"}, data)
     if response is None:
-        logging.error("Failed to retrieve PORT JWT Token. (empty response)")
-        return None
+        logging.critical("Failed to retrieve PORT JWT Token. (empty response)")
+        raise RuntimeError("Failed to retrieve PORT JWT Token.")
 
     return response.json().get("accessToken")
 
