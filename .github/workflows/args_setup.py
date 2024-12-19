@@ -30,8 +30,8 @@ def post_log_args(subparsers):
 
 def get_token_args(subparsers):
     get_token_parser = subparsers.add_parser("get_token")
-    get_token_parser.add_argument("--client_id", required=True, help="Port client ID")
-    get_token_parser.add_argument("--client_secret", required=True, help="Port client secret")
+    get_token_parser.add_argument("--client_id", required=False, help="Port client ID")
+    get_token_parser.add_argument("--client_secret", required=False, help="Port client secret")
 
 
 def print_inputs_args(subparsers):
