@@ -42,10 +42,9 @@ def sanitize_to_json(raw_context: str) -> str:
 
 def get_port_context():
     try:
-        port_context_raw = get_env_var('PORT_CONTEXT')
-        logging.info(f"PORT_CONTEXT: {port_context_raw}")
-        port_context_raw1 = get_env_var('PORT_CONTEXT1')
-        logging.info(f"PORT_CONTEXT1: {port_context_raw1}")
+        port_context_raw = get_env_var('PORT_CONTEXT3')
+        parsed_port_context = json.loads(
+            port_context_raw.replace("\\", '').replace('"{', '{').replace('}"', '}'))
 
         if not port_context_raw:
             logging.critical("PORT_CONTEXT environment variable is not set or empty.")
