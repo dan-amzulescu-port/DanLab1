@@ -42,7 +42,7 @@ def sanitize_to_json(raw_context: str) -> str:
 
 def get_port_context():
     try:
-        port_context_raw = get_env_var('PORT_CONTEXT3')
+        port_context_raw = get_env_var('PORT_CONTEXT')
         parsed_port_context = json.loads(
             port_context_raw.replace("\\", '').replace('"{', '{').replace('}"', '}'))
 
