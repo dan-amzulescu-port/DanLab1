@@ -15,17 +15,17 @@ def create_ec2_args(subparsers):
 
 def create_environment_args(subparsers):
     create_env_parser = subparsers.add_parser("create_environment")
-    create_env_parser.add_argument("--project", required=True, help="Project name")
-    create_env_parser.add_argument("--token", required=True, help="PORT JWT token")
-    create_env_parser.add_argument("--ttl", required=True, help="ttl of the ENV")
-    create_env_parser.add_argument("--triggered_by", required=True, help="who triggered deployment userIdentifier")
+    create_env_parser.add_argument("--project", required=False, help="Project name")
+    create_env_parser.add_argument("--token", required=False, help="PORT JWT token")
+    create_env_parser.add_argument("--ttl", required=False, help="ttl of the ENV")
+    create_env_parser.add_argument("--triggered_by", required=False, help="who triggered deployment userIdentifier")
 
 
 def post_log_args(subparsers):
     post_log_parser = subparsers.add_parser("post_log")
-    post_log_parser.add_argument("--run_id", required=True, help="run_id of the action")
+    post_log_parser.add_argument("--run_id", required=False, help="run_id of the action")
     post_log_parser.add_argument("--message", required=True, help="Log message to post")
-    post_log_parser.add_argument("--token", required=True, help="PORT JWT token")
+    post_log_parser.add_argument("--token", required=False, help="PORT JWT token")
 
 
 def get_token_args(subparsers):

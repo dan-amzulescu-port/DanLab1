@@ -27,8 +27,8 @@ def get_port_token() -> Optional[str]:
     Retrieve the PORT JWT Token using the provided client credentials.
     """
     url = f"{PORT_API_URL}/auth/access_token"
-    client_id = os.environ.get('ENV_PORT_CLIENT_ID', None)
-    client_secret = os.environ.get('ENV_PORT_CLIENT_SECRET', None)
+    client_id = os.environ.get('PORT_CLIENT_ID', None)
+    client_secret = os.environ.get('PORT_CLIENT_SECRET', None)
 
     data = {"clientId": client_id, "clientSecret": client_secret}
     response = send_post_request(url, {"Content-Type": "application/json"}, data)
