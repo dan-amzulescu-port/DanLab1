@@ -2,6 +2,7 @@ import logging
 import os
 import json
 from typing import Optional
+import base64
 
 import requests
 from constants import PORT_API_URL
@@ -28,9 +29,13 @@ def get_port_token() -> Optional[str]:
     """
     url = f"{PORT_API_URL}/auth/access_token"
     client_id = os.environ.get('PORT_CLIENT_ID', None)
-    logging.info(f"PORT_CLIENT_ID(len): {len(client_id)}")
+
+    encoded_data = base64.b64encode(client_id.encode('utf-8')).decode('utf-8')
+    logging.info(f"PORT_CLIENT_ID(len): {len(client_id)} - {encoded_data}")
     client_secret = os.environ.get('PORT_CLIENT_SECRET', None)
-    logging.info(f"PORT_CLIENT_SECRET(len): {len(client_secret)}")
+
+    encoded_data = base64.b64encode(client_secret.encode('utf-8')).decode('utf-8')
+    logging.info(f"PORT_CLIENT_SECRET(len): {len(client_secret)} - {encoded_data}")
 
     data = {"clientId": client_id, "clientSecret": client_secret}
     response = send_post_request(url, {"Content-Type": "application/json"}, data)
