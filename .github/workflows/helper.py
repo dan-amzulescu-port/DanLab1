@@ -77,7 +77,7 @@ def calculate_time_delta(time_input: str) -> str:
     # Convert to ISO 8601 format with milliseconds and Z for UTC
     return future_time.isoformat().replace('+00:00', '.000Z')
 
-def get_env_var(var_name: str) -> Optional[str, None]:
+def get_env_var(var_name: str) -> Optional[str]:
     try:
         value = os.getenv(var_name, default=None)
         if value is not None:
