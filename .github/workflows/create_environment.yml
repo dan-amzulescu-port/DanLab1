@@ -23,7 +23,8 @@ jobs:
     - name: Set Env Variables
       run: |
         echo "PORT_CONTEXT=${{ toJson(github.event.inputs.port_context) }}" >> $GITHUB_ENV
-        echo "PORT_CONTEXT1='${{ github.event.inputs.port_context }}'" >> $GITHUB_ENV
+        echo "PORT_CONTEXT1='${{ github.event.inputs.port_context }}'" >> $GITHUB_ENV    
+        echo "PORT_CONTEXT2=$(echo '${{ toJson(github.event.inputs.port_context) }}' | sed 's/"/\\"/g')" >> $GITHUB_EN
 
     - name: Install dependencies
       run: |
