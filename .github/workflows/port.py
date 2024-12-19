@@ -81,7 +81,9 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
     headers = get_port_api_headers()
 
     port_env_context = get_port_context()
-    ttl = port_env_context["inputs"].get("ttl", ttl)
+    logging.info("port_env_context: %s", port_env_context)
+
+    ttl = port_env_context["inputs"]["ttl"] if ttl == "" else ttl
     project = port_env_context["inputs"].get("project", project)
     triggered_by = port_env_context["inputs"].get("triggered_by", triggered_by)
 

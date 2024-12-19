@@ -38,8 +38,6 @@ jobs:
 
     - name: Create environment
       id: create_environment
-      env:
-        ENV_PORT_CONTEXT: ${{ toJson(inputs.port_context) }}
       run: |
           python .github/workflows/create_environment.py create_environment
           python .github/workflows/create_environment.py post_log \
