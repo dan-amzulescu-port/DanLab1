@@ -39,7 +39,6 @@ def sanitize_to_json(raw_context: str) -> str:
 
     return sanitized
 
-
 def get_port_context():
     try:
         port_context_raw = get_env_var('PORT_CONTEXT')

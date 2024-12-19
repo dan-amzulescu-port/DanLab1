@@ -60,8 +60,12 @@ def post_log(message, token="", run_id=""):
         logging.info("Successfully posted log: %s", message)
 
 
-def get_port_api_headers(token):
-    env_port_context = get_env_var_context()
+def get_port_api_headers(token:str = ""):
+    if not token:
+        token = get_env_var("PORT_TOKEN")
+        if not token:
+            logging.error("PORT_TOKEN environment variable is not set or empty.")
+            return None
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
@@ -75,6 +79,7 @@ def create_environment(project: str = '', token: str = '', ttl: str = '', trigge
 #     Create an environment entity in Port.
 
     url = f"{PORT_API_URL}/blueprints/environment/entities"
+
     headers = get_port_api_headers(token)
 
     time_bounded = ttl != "Indefinite"
