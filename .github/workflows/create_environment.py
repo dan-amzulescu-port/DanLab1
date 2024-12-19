@@ -39,7 +39,7 @@ def execute_command(args):
         case "post_log":
             post_log(args.message, args.token, args.run_id)
         case "create_environment":
-            return create_environment(args.project, args.token, args.ttl, args.triggered_by)
+            return create_environment()
         case "create_ec2_cloud_resource":
             create_ec2_cloud_resource(args.project, args.resource_type, args.token)
         case "create_s3_cloud_resource":
