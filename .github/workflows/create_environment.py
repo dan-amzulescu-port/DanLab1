@@ -34,7 +34,7 @@ def execute_command(args):
         case "print_inputs":
             print_inputs(args.port_context, args.requires_s3, args.requires_ec2, args.project, args.ttl)
         case "get_token":
-            set_env_var("PORT_TOKEN", get_port_token())
+            set_env_var("PORT_TOKEN", get_port_token(args.client_id, args.client_secret))
             logging.info(f"Successfully set PORT_TOKEN=({get_env_var("PORT_TOKEN")}) environment variable.")
         case "post_log":
             post_log(args.message, args.token, args.run_id)
