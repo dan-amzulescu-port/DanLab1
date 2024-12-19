@@ -22,7 +22,7 @@ def send_post_request(url, headers, data):
     return response
 
 
-def get_port_token() -> Optional[str, None]:
+def get_port_token() -> Optional[str]:
     """
     Retrieve the PORT JWT Token using the provided client credentials.
     """
