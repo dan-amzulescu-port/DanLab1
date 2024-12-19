@@ -50,7 +50,7 @@ def get_port_context():
             logging.critical("PORT_CONTEXT environment variable is not set or empty.")
             return None
 
-        parsed_port_context = json.loads(sanitize_to_json(port_context_raw))
+        # parsed_port_context = json.loads(sanitize_to_json(port_context_raw))
         return parsed_port_context
 
     except json.JSONDecodeError as e:
