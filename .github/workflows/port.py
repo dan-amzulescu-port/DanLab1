@@ -81,9 +81,9 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
     headers = get_port_api_headers()
 
     port_env_context = get_port_context()
-    ttl = port_env_context.get("ttl", ttl)
-    project = port_env_context.get("project", project)
-    triggered_by = port_env_context.get("triggered_by", triggered_by)
+    ttl = port_env_context["inputs"].get("ttl", ttl)
+    project = port_env_context["inputs"].get("project", project)
+    triggered_by = port_env_context["inputs"].get("triggered_by", triggered_by)
 
 
     time_bounded = ttl != "Indefinite"
