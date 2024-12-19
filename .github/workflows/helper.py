@@ -44,10 +44,8 @@ def get_port_context():
     try:
         port_context_raw = get_env_var('PORT_CONTEXT')
         logging.info(f"PORT_CONTEXT: {port_context_raw}")
-        port_context_raw2 = get_env_var('PORT_CONTEXT')
-        logging.info(f"PORT_CONTEXT2: {port_context_raw2}")
-        port_context_raw3 = get_env_var('PORT_CONTEXT')
-        logging.info(f"PORT_CONTEXT3: {port_context_raw3}")
+        port_context_raw1 = get_env_var('PORT_CONTEXT1')
+        logging.info(f"PORT_CONTEXT1: {port_context_raw1}")
 
         if not port_context_raw:
             logging.critical("PORT_CONTEXT environment variable is not set or empty.")
