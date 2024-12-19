@@ -23,8 +23,8 @@ jobs:
     - name: Set Env Variables
       run: |
         echo "PORT_CONTEXT='${{ toJson(github.event.inputs.port_context) }}'" >> $GITHUB_ENV
-        echo "PORT_CLIENT_ID=${{ secrets.PORT_CLIENT_ID }}" >> $GITHUB_ENV
-        echo "PORT_CLIENT_SECRET=${{ secrets.PORT_CLIENT_SECRET }}" >> $GITHUB_ENV
+        echo "PORT_CLIENT_ID='${{ secrets.PORT_CLIENT_ID }}'" >> $GITHUB_ENV
+        echo "PORT_CLIENT_SECRET='${{ secrets.PORT_CLIENT_SECRET }}'" >> $GITHUB_ENV
 
     - name: Install dependencies
       run: |

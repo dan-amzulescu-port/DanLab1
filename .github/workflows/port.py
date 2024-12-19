@@ -31,9 +31,11 @@ def get_port_token(client_id:str = "", client_secret:str = "") -> Optional[str]:
     client_id_from_env = os.environ.get('PORT_CLIENT_ID', None)
     client_secret_from_env = os.environ.get('PORT_CLIENT_SECRET', None)
     if client_id_from_env != client_id:
-        logging.error("client_id_from_env != client_id")
+        logging.error(f"client_id_from_env({base64.b64encode(client_id_from_env.encode('utf-8')).decode('utf-8')}) != "
+                      f"client_id({base64.b64encode(client_id.encode('utf-8')).decode('utf-8')})")
         if client_secret_from_env != client_secret:
-            logging.error("client_secret_from_env != client_secret")
+            logging.error(f"client_secret_from_env({base64.b64encode(client_secret_from_env.encode('utf-8')).decode('utf-8')}) != "
+                      f"client_secret({base64.b64encode(client_secret.encode('utf-8')).decode('utf-8')})")
         return None
 
     encoded_data = base64.b64encode(client_id.encode('utf-8')).decode('utf-8')
