@@ -19,6 +19,8 @@ def sanitize_to_json(raw_context: str) -> str:
         str: A valid JSON string.
     """
     # Remove single quotes wrapping the entire string
+    logging.info(f"raw_context: {raw_context}")
+
     if raw_context.startswith("'") and raw_context.endswith("'"):
         raw_context = raw_context[1:-1]
 
