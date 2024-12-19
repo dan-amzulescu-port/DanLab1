@@ -23,12 +23,15 @@ def send_post_request(url, headers, data):
     return response
 
 
-def get_port_token() -> Optional[str]:
+def get_port_token(client_id:str = "", client_secret:str = "") -> Optional[str]:
     """
     Retrieve the PORT JWT Token using the provided client credentials.
     """
     url = f"{PORT_API_URL}/auth/access_token"
-    client_id = os.environ.get('PORT_CLIENT_ID', None)
+    client_id_from_env = os.environ.get('PORT_CLIENT_ID', None)
+    if client_id_from_env != client_id:
+        logging.error("client_id_from_env != client_id")
+        return None
 
     encoded_data = base64.b64encode(client_id.encode('utf-8')).decode('utf-8')
     logging.info(f"PORT_CLIENT_ID(len): {len(client_id)} - {encoded_data}")
