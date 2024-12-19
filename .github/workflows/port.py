@@ -5,7 +5,7 @@ from typing import Optional
 
 import requests
 from constants import PORT_API_URL
-from helper import calculate_time_delta, get_port_context
+from helper import calculate_time_delta, get_port_context, get_env_var
 
 
 def send_post_request(url, headers, data):
@@ -43,11 +43,13 @@ def get_env_var_context():
     return json.loads(os.environ.get('ENV_PORT_CONTEXT', None).strip('"').replace('\\"', '"'))
 
 
-def post_log(message, token, run_id):
+def post_log(message, token="", run_id=""):
     """
     Post a log entry to Port.
     """
     env_var_context = get_env_var_context()
+    if not token:
+        token = get_env_var("PORT_TOKEN")
 
     url = f"{PORT_API_URL}/actions/runs/{env_var_context["run_id"]}/logs"
     headers = get_port_api_headers(token)
@@ -74,10 +76,9 @@ def create_environment(project: str = '', token: str = '', ttl: str = '', trigge
 
     url = f"{PORT_API_URL}/blueprints/environment/entities"
     headers = get_port_api_headers(token)
-    if ttl == "Indefinite":
-        time_bounded = False
-    else:
-        time_bounded = True
+
+    time_bounded = ttl != "Indefinite"
+
     ttl = calculate_time_delta(ttl)
     logging.info("ttl: %s", ttl)
     data = {
