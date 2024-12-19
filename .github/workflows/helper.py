@@ -19,7 +19,6 @@ def sanitize_to_json(raw_context: str) -> str:
         str: A valid JSON string.
     """
     # Remove single quotes wrapping the entire string
-    logging.info(f"raw_context: {raw_context}")
 
     if raw_context.startswith("'") and raw_context.endswith("'"):
         raw_context = raw_context[1:-1]
@@ -44,6 +43,11 @@ def sanitize_to_json(raw_context: str) -> str:
 def get_port_context():
     try:
         port_context_raw = get_env_var('PORT_CONTEXT')
+        logging.info(f"PORT_CONTEXT: {port_context_raw}")
+        port_context_raw2 = get_env_var('PORT_CONTEXT')
+        logging.info(f"PORT_CONTEXT2: {port_context_raw2}")
+        port_context_raw3 = get_env_var('PORT_CONTEXT')
+        logging.info(f"PORT_CONTEXT3: {port_context_raw3}")
 
         if not port_context_raw:
             logging.critical("PORT_CONTEXT environment variable is not set or empty.")
