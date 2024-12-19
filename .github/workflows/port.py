@@ -2,7 +2,6 @@ import logging
 import os
 import json
 from typing import Optional
-import base64
 
 import requests
 from constants import PORT_API_URL
@@ -73,13 +72,19 @@ def get_port_api_headers(token:str = ""):
 
 
 #
-def create_environment(project: str = '', token: str = '', ttl: str = '', triggered_by: str = ''):
+def create_environment(project: str = '', ttl: str = '', triggered_by: str = ''):
 #     """
 #     Create an environment entity in Port.
 
     url = f"{PORT_API_URL}/blueprints/environment/entities"
 
-    headers = get_port_api_headers(token)
+    headers = get_port_api_headers()
+
+    port_env_context = get_port_context()
+    ttl = port_env_context.get("ttl", ttl)
+    project = port_env_context.get("project", project)
+    triggered_by = port_env_context.get("triggered_by", triggered_by)
+
 
     time_bounded = ttl != "Indefinite"
 
