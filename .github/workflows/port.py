@@ -83,7 +83,7 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
     port_env_context = get_port_context()
     logging.info("port_env_context: %s", port_env_context)
 
-    ttl = port_env_context["inputs"]["ttl"] if ttl == "" else ttl
+    ttl = port_env_context["inputs"].get("ttl", ttl)
     project = port_env_context["inputs"].get("project", project)
     triggered_by = port_env_context["inputs"].get("triggered_by", triggered_by)
 
