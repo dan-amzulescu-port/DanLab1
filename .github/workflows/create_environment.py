@@ -51,7 +51,7 @@ def add_arguments_for_commands(subparsers):
     # Subcommand: print_inputs
     print_inputs_args(subparsers)
     # Subcommand: get_token
-    get_token_args(subparsers)
+    # get_token_args(subparsers)
     # Subcommand: post_log
     post_log_args(subparsers)
     # Subcommand: create_environment
