@@ -1,6 +1,7 @@
 import logging
 import os
 import json
+from typing import Optional
 
 import requests
 from constants import PORT_API_URL
@@ -20,37 +21,51 @@ def send_post_request(url, headers, data):
 
     return response
 
-def get_token(client_id, client_secret):
+
+def get_port_token() -> Optional[str, None]:
     """
     Retrieve the PORT JWT Token using the provided client credentials.
     """
     url = f"{PORT_API_URL}/auth/access_token"
+    client_id = os.environ.get('ENV_PORT_CLIENT_ID', None)
+    client_secret = os.environ.get('ENV_PORT_CLIENT_SECRET', None)
+
     data = {"clientId": client_id, "clientSecret": client_secret}
     response = send_post_request(url, {"Content-Type": "application/json"}, data)
-
-    env_port_context = json.loads(os.environ.get('ENV_PORT_CONTEXT', None).strip('"').replace('\\"', '"'))
-    logging.info(f"context_input(json loaded): {type(env_port_context)}:{env_port_context}")
-    logging.info(f"s3: {env_port_context["inputs"]["requires_s_3"]}")
-
-    
     if response is None:
+        logging.error("Failed to retrieve PORT JWT Token. (empty response)")
         return None
+
     return response.json().get("accessToken")
+
+
+def get_env_var_context():
+    return json.loads(os.environ.get('ENV_PORT_CONTEXT', None).strip('"').replace('\\"', '"'))
+
 
 def post_log(message, token, run_id):
     """
     Post a log entry to Port.
     """
-    url = f"{PORT_API_URL}/actions/runs/{run_id}/logs"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {token}"
-    }
+    env_var_context = get_env_var_context()
+
+    url = f"{PORT_API_URL}/actions/runs/{env_var_context["run_id"]}/logs"
+    headers = get_port_api_headers(token)
     data = {"message": message}
     response = send_post_request(url, headers, data)
 
     if response:
         logging.info("Successfully posted log: %s", message)
+
+
+def get_port_api_headers(token):
+    env_port_context = get_env_var_context()
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}"
+    }
+    return headers
+
 
 #
 def create_environment(project: str = '', token: str = '', ttl: str = '', triggered_by: str = ''):
@@ -58,10 +73,7 @@ def create_environment(project: str = '', token: str = '', ttl: str = '', trigge
 #     Create an environment entity in Port.
 
     url = f"{PORT_API_URL}/blueprints/environment/entities"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {token}"
-    }
+    headers = get_port_api_headers(token)
     if ttl == "Indefinite":
         time_bounded = False
     else:

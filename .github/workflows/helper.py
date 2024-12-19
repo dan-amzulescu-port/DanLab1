@@ -3,6 +3,8 @@ import logging
 import os
 import re
 from datetime import datetime, timedelta
+from typing import Optional
+
 import pytz
 
 
@@ -38,55 +40,26 @@ def sanitize_to_json(raw_context: str) -> str:
     return sanitized
 
 
-
-
 def get_port_context():
-    """
-    Retrieves the PORT_CONTEXT from the environment variable.
-
-    Returns:
-        dict: The PORT_CONTEXT as a dictionary, or None if the environment variable is not set or invalid.
-    """
     try:
-        port_context_raw = os.environ.get('PORT_CONTEXT', None)
+        port_context_raw = get_env_var('PORT_CONTEXT')
+
         if not port_context_raw:
-            logging.error("PORT_CONTEXT environment variable is not set or empty.")
+            logging.critical("PORT_CONTEXT environment variable is not set or empty.")
             return None
 
-        logging.info(f"Raw PORT_CONTEXT: {port_context_raw}")
-
-        # Sanitize the malformed JSON
-        sanitized_port_context = sanitize_to_json(port_context_raw)
-        logging.info(f"Sanitized PORT_CONTEXT: {sanitized_port_context}")
-
-        # Parse JSON
-        parsed_port_context = json.loads(sanitized_port_context)
-        logging.info(f"Parsed PORT_CONTEXT: {parsed_port_context}")
+        parsed_port_context = json.loads(sanitize_to_json(port_context_raw))
         return parsed_port_context
+
     except json.JSONDecodeError as e:
-        logging.error(f"Invalid JSON format in PORT_CONTEXT: {e}")
+        logging.critical(f"Invalid JSON format in PORT_CONTEXT: {e}")
         return None
     except Exception as e:
-        logging.error(f"Unexpected error: {e}")
+        logging.critical(f"Unexpected error: {e}")
         return None
 
 def calculate_time_delta(time_input: str) -> str:
-    """
-    Calculate future timestamp based on input string.
 
-    Args:
-        time_input (str): Time delta specification
-
-    Returns:
-        str: ISO 8601 formatted timestamp in UTC
-
-    Supported inputs:
-    - "1 Day"
-    - "2 Hours"
-    - "1 Week"
-    - "Indefinite"
-    """
-    # Get current time in UTC
     current_time = datetime.now(pytz.UTC).replace(microsecond=0)
 
     # Parse and add time delta
@@ -103,3 +76,25 @@ def calculate_time_delta(time_input: str) -> str:
 
     # Convert to ISO 8601 format with milliseconds and Z for UTC
     return future_time.isoformat().replace('+00:00', '.000Z')
+
+def get_env_var(var_name: str) -> Optional[str, None]:
+    try:
+        value = os.getenv(var_name, default=None)
+        if value is not None:
+            logging.info(f"Environment variable '{var_name}' found with value: {value}")
+            return value
+        else:
+            logging.warning(f"Environment variable '{var_name}' not found.")
+            return None
+    except Exception as e:
+        logging.error(f"Error retrieving environment variable '{var_name}': {e}")
+        return None
+
+def set_env_var(name: str, value: str):
+    """Writes an environment variable to GITHUB_ENV for subsequent steps."""
+    github_env = os.getenv('GITHUB_ENV', default=None)
+    if github_env:
+        with open(github_env, 'a') as env_file:
+            env_file.write(f"{name}={value}\n")
+    else:
+        raise RuntimeError("GITHUB_ENV is not available. Are you running in a GitHub Actions environment?")

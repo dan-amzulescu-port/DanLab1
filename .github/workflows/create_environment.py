@@ -1,8 +1,9 @@
 import logging
 from args_setup import (print_inputs_args, get_token_args, post_log_args, create_environment_args,
                         create_ec2_args, create_s3_args)
+from helper import set_env_var
 
-from port import get_token, post_log, create_environment, create_ec2_cloud_resource, create_s3_cloud_resource
+from port import get_port_token, post_log, create_environment, create_ec2_cloud_resource, create_s3_cloud_resource
 from args_parser import ArgsParser
 
 # Configure logging
@@ -33,7 +34,7 @@ def execute_command(args):
         case "print_inputs":
             print_inputs(args.port_context, args.requires_s3, args.requires_ec2, args.project, args.ttl)
         case "get_token":
-            return get_token(args.client_id, args.client_secret)
+            set_env_var("PORT_TOKEN", get_port_token())
         case "post_log":
             post_log(args.message, args.token, args.run_id)
         case "create_environment":
