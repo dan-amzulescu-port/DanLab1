@@ -1,7 +1,7 @@
 import logging
 
 from helper import set_env_var, get_env_var
-from port import get_port_token, post_log, create_environment, create_ec2_cloud_resource, create_s3_cloud_resource
+from port import get_port_token, post_log, create_environment
 
 
 def execute_command(args):
@@ -39,12 +39,6 @@ def get_token_args(subparsers):
 
 
 def add_arguments_for_commands(subparsers):
-    # Subcommand: get_token
     get_token_args(subparsers)
-    # Subcommand: post_log
     post_log_args(subparsers)
-    # Subcommand: create_environment
     create_environment_args(subparsers)
-    # Subcommand: create_cloud_resource
-    create_ec2_args(subparsers)
-    create_s3_args(subparsers)
