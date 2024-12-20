@@ -1,6 +1,6 @@
 import logging
 
-from args_setup import add_arguments_for_commands
+from args_setup import add_arguments_for_commands, execute_command
 from helper import set_env_var, get_env_var
 
 from port import get_port_token, post_log, create_environment, create_ec2_cloud_resource, create_s3_cloud_resource
