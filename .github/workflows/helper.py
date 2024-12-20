@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import re
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -65,6 +64,9 @@ def set_env_var(name: str, value: str):
     github_env = os.getenv('GITHUB_ENV', default=None)
     if github_env:
         with open(github_env, 'a') as env_file:
+            logging.info(f"Setting environment variable '{name}' in GITHUB_ENV.")
             env_file.write(f"{name}={value}\n")
+        test = get_env_var('PORT_TOKEN')
+        logging.info(f"===PORT_TOKEN = {test}")
     else:
         raise RuntimeError("GITHUB_ENV is not available. Are you running in a GitHub Actions environment?")
