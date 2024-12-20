@@ -29,7 +29,7 @@ def get_port_token(client_id:str = "", client_secret:str = "") -> Optional[str]:
     url = f"{PORT_API_URL}/auth/access_token"
 
     data = {"clientId": client_id, "clientSecret": client_secret}
-    response = send_post_request(url, {"Content-Type": "application/json"}, data)
+    response = send_post_request(url, {"Content-Type": "application/json"}, None,data)
     if response is None:
         logging.critical("Failed to retrieve PORT JWT Token. (empty response)")
         raise RuntimeError("Failed to retrieve PORT JWT Token.")
@@ -48,7 +48,7 @@ def post_log(message, token="", run_id=""):
     url = f'{PORT_API_URL}/actions/runs/{run_id}/logs'
     headers = get_port_api_headers(token)
     data = {"message": message}
-    response = send_post_request(url, headers, params="", data=data)
+    response = send_post_request(url, headers, None, data=data)
 
     if response:
         logging.info("Successfully posted log: %s", message)
