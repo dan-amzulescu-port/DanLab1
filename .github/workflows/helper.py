@@ -50,7 +50,7 @@ def get_env_var(var_name: str) -> Optional[str]:
     try:
         value = os.getenv(var_name, default=None)
         if value is not None:
-            logging.info(f"Environment variable '{var_name}' found with value: {value}")
+            logging.debug(f"Environment variable '{var_name}' found with value: {value}")
             return value
         else:
             logging.warning(f"Environment variable '{var_name}' not found.")

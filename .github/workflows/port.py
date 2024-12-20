@@ -3,6 +3,8 @@ import os
 from typing import Optional
 
 import requests
+
+from args_setup import create_environment_args
 from constants import PORT_API_URL
 from helper import calculate_time_delta, get_port_context, get_env_var
 
@@ -14,8 +16,7 @@ def send_post_request(url, headers, params, data):
     response = requests.post(url, headers=headers, params=params, json=data)
 
     if response.status_code != 200 and response.status_code != 201:
-        logging.info("response.status_code: %s", response.status_code)
-        logging.error("Failed to send POST request: %s", response.text)
+        logging.error(f"Failed to send POST request: {response.text}:{response.status_code}")
         return None
 
     return response
@@ -49,8 +50,8 @@ def post_log(message, token="", run_id=""):
     data = {"message": message}
     response = send_post_request(url, headers, None, data=data)
 
-    if response:
-        logging.info("Successfully posted log: %s", message)
+    if not response:
+        logging.error(f"Error writing log message {message} to Port.")
 
 
 def get_port_api_headers(token:str = ""):
@@ -70,46 +71,49 @@ def get_port_api_headers(token:str = ""):
 def create_environment(project: str = '', ttl: str = '', triggered_by: str = ''):
 #     """
 #     Create an environment entity in Port.
-
-    url = f"{PORT_API_URL}/blueprints/environment/entities"
-
-    headers = get_port_api_headers()
-
     port_env_context = get_port_context()
+    try:
+        url = f"{PORT_API_URL}/blueprints/environment/entities"
+        headers = get_port_api_headers()
 
-    ttl = port_env_context["inputs"].get("ttl", ttl)
-    project = port_env_context["inputs"]["project"].get("identifier", project)
-    triggered_by = port_env_context.get("triggered_by", triggered_by)
-    ttl = calculate_time_delta(ttl)
+        project = port_env_context["inputs"]["project"].get("identifier", project)
+        triggered_by = port_env_context.get("triggered_by", triggered_by)
+        ttl = calculate_time_delta(port_env_context["inputs"].get("ttl", ttl))
 
-    params = {
-        "run_id": port_env_context["runId"],
-        "upsert": "true"
-    }
-    data = {
-        "identifier": f"environment_{os.urandom(4).hex()}",
-        "title": "Environment",
-        "properties": {
-            "time_bounded": ttl != "Indefinite",
-            "ttl": ttl  # Example default TTL
-        },
-        "relations": {
-            "project": project,
-            "triggered_by": triggered_by
+        params = {"run_id": port_env_context["runId"], "upsert": "true"}
+
+        data = {
+            "identifier": f"environment_{os.urandom(4).hex()}",
+            "title": "Environment",
+            "properties": {
+                "time_bounded": ttl != "Indefinite",
+                "ttl": ttl  # Example default TTL
+            },
+            "relations": {
+                "project": project,
+                "triggered_by": triggered_by
+            }
         }
-    }
 
-    response = send_post_request(url, headers, params, data)
+        response = send_post_request(url, headers, params, data)
 
-    if response:
-        e_id = response.json()["entity"]["identifier"]
+        if response:
+            e_id = response.json()["entity"]["identifier"]
+            logging.debug(f"Successfully created environment e_id: {e_id}")
+            post_log(f'✅ Environment ({e_id}) successfully created! 🥳 Ready to deploy 🚀',
+                     run_id=port_env_context["runId"])
+            # create_environment_cloud_resources(env=e_id)
+        else:
+            logging.error("Environment creation failed. No valid 'identifier' in response.")
+            post_log(f'❌ Failed to create environment.', run_id=port_env_context["runId"])
 
-        logging.info(f"Successfully created environment e_id: {e_id}")
+    except Exception as e:
+        logging.error(f"Error occurred while creating environment: {str(e)}")
+        post_log(f'❌ Error occurred while creating environment: {str(e)}', run_id=port_env_context["runId"])
 
-        post_log(f'✅ Environment ({e_id}) successfully created! 🥳 Ready to deploy 🚀',
-                 run_id=port_env_context["runId"])
-        return response.json()["entity"]["identifier"]
-
+def create_environment_cloud_resources(e_id: str):
+    port_env_context = get_port_context()
+    
 
 def create_ec2_cloud_resource(project, resource_type, token):
     """
