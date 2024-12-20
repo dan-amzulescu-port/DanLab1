@@ -83,7 +83,6 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
     project = port_env_context["inputs"]["project"].get("identifier", project)
     triggered_by = port_env_context.get("triggered_by", triggered_by)
 
-
     time_bounded = ttl != "Indefinite"
 
     ttl = calculate_time_delta(ttl)
@@ -104,9 +103,14 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
     response = send_post_request(url, headers, data)
 
     if response:
-        logging.info(f"Successfully created environment: {data["identifier"]}")
-        logging.info(f"Successfully created environment response: {response}")
-        logging.info(f"Successfully created environment e_id: {response.json()["entity"]["identifier"]}")
+        e_id = response.json()["entity"]["identifier"]
+        link = f"https://app.getport.io/environmentEntity?identifier={e_id}&blueprintTabIdentifier=projects%24upstream"
+
+        logging.info(f"Successfully created environment e_id: {e_id}")
+
+        post_log(f'✅ Environment (<a href="{link}" target="_blank">{e_id}</a>) successfully created! 🥳 Ready to deploy 🚀',
+                 run_id=port_env_context["runId"])
+        return response.json()["entity"]["identifier"]
 
 
 def create_ec2_cloud_resource(project, resource_type, token):
