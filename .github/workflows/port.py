@@ -44,7 +44,7 @@ def post_log(message, token="", run_id=""):
     """
     env_var_context = get_port_context()
     if not run_id:
-        run_id = env_var_context["run_id"]
+        run_id = env_var_context["runId"]
     url = f'{PORT_API_URL}/actions/runs/{run_id}/logs'
     headers = get_port_api_headers(token)
     data = {"message": message}
