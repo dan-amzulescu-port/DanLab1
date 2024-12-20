@@ -4,7 +4,6 @@ from typing import Optional
 
 import requests
 
-from args_setup import create_environment_args
 from constants import PORT_API_URL
 from helper import calculate_time_delta, get_port_context, get_env_var
 
@@ -37,7 +36,6 @@ def get_port_token(client_id:str = "", client_secret:str = "") -> Optional[str]:
     return response.json().get("accessToken")
 
 
-
 def post_log(message, token="", run_id=""):
     """
     Post a log entry to Port.
@@ -67,7 +65,6 @@ def get_port_api_headers(token:str = ""):
     return headers
 
 
-#
 def create_environment(project: str = '', ttl: str = '', triggered_by: str = ''):
 #     """
 #     Create an environment entity in Port.
@@ -113,7 +110,7 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
 
 def create_environment_cloud_resources(e_id: str):
     port_env_context = get_port_context()
-    
+
 
 def create_ec2_cloud_resource(project, resource_type, token):
     """
