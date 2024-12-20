@@ -61,6 +61,7 @@ def get_env_var(var_name: str) -> Optional[str]:
 
 def set_env_var(name: str, value: str):
     """Writes an environment variable to GITHUB_ENV for subsequent steps."""
+    os.environ[name] = value
     github_env = os.getenv('GITHUB_ENV', default=None)
     if github_env:
         with open(github_env, 'a') as env_file:
