@@ -43,8 +43,9 @@ def post_log(message, token="", run_id=""):
     Post a log entry to Port.
     """
     env_var_context = get_port_context()
-
-    url = f"{PORT_API_URL}/actions/runs/{env_var_context["run_id"]}/logs"
+    if not run_id:
+        run_id = env_var_context["run_id"]
+    url = f'{PORT_API_URL}/actions/runs/{run_id}/logs'
     headers = get_port_api_headers(token)
     data = {"message": message}
     response = send_post_request(url, headers, data)
