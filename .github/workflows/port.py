@@ -1,6 +1,5 @@
 import logging
 import os
-import json
 from typing import Optional
 
 import requests
@@ -77,26 +76,21 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
     headers = get_port_api_headers()
 
     port_env_context = get_port_context()
-    logging.info("port_env_context: %s", port_env_context)
 
     ttl = port_env_context["inputs"].get("ttl", ttl)
     project = port_env_context["inputs"]["project"].get("identifier", project)
     triggered_by = port_env_context.get("triggered_by", triggered_by)
-
-    time_bounded = ttl != "Indefinite"
-
     ttl = calculate_time_delta(ttl)
 
     params = {
         "run_id": port_env_context["runId"],
         "upsert": "true"
     }
-
     data = {
         "identifier": f"environment_{os.urandom(4).hex()}",
         "title": "Environment",
         "properties": {
-            "time_bounded": time_bounded,
+            "time_bounded": ttl != "Indefinite",
             "ttl": ttl  # Example default TTL
         },
         "relations": {
@@ -109,7 +103,6 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
 
     if response:
         e_id = response.json()["entity"]["identifier"]
-        link = f"https://app.getport.io/environmentEntity?identifier={e_id}&blueprintTabIdentifier=projects%24upstream"
 
         logging.info(f"Successfully created environment e_id: {e_id}")
 
@@ -123,9 +116,15 @@ def create_ec2_cloud_resource(project, resource_type, token):
     Create a cloud resource entity in Port.
     """
     url = f"{PORT_API_URL}/blueprints/cloudResource/entities"
+
+    port_env_context = get_port_context()
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
+    }
+    params = {
+        "run_id": port_env_context["runId"],
+        "upsert": "true"
     }
     data = {
         "identifier": f"{resource_type}_{os.urandom(4).hex()}",
@@ -140,7 +139,7 @@ def create_ec2_cloud_resource(project, resource_type, token):
         }
     }
 
-    response = send_post_request(url, headers, data)
+    response = send_post_request(url, headers, params, data)
 
     if response:
         logging.info("Successfully created cloud resource: %s", data["identifier"])
@@ -150,9 +149,14 @@ def create_s3_cloud_resource(project, resource_type, token):
     Create a cloud resource entity in Port.
     """
     url = f"{PORT_API_URL}/blueprints/cloudResource/entities"
+    port_env_context = get_port_context()
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
+    }
+    params = {
+        "run_id": port_env_context["runId"],
+        "upsert": "true"
     }
     data = {
         "identifier": f"{resource_type}_{os.urandom(4).hex()}",
@@ -167,7 +171,7 @@ def create_s3_cloud_resource(project, resource_type, token):
         }
     }
 
-    response = send_post_request(url, headers, data)
+    response = send_post_request(url, headers, params, data)
 
     if response:
         logging.info("Successfully created cloud resource: %s", data["identifier"])

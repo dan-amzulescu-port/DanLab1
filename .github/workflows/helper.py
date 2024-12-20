@@ -61,13 +61,11 @@ def get_env_var(var_name: str) -> Optional[str]:
 
 def set_env_var(name: str, value: str):
     """Writes an environment variable to GITHUB_ENV for subsequent steps."""
-    os.environ[name] = value
+    os.environ[name] = value #important for current step (the other GHA steps handled next)
     github_env = os.getenv('GITHUB_ENV', default=None)
     if github_env:
         with open(github_env, 'a') as env_file:
-            logging.info(f"Setting environment variable '{name}' in GITHUB_ENV.")
+            logging.debug(f"Setting environment variable '{name}' in GITHUB_ENV.")
             env_file.write(f"{name}={value}\n")
-        test = get_env_var('PORT_TOKEN')
-        logging.info(f"===PORT_TOKEN = {test}")
     else:
         raise RuntimeError("GITHUB_ENV is not available. Are you running in a GitHub Actions environment?")
