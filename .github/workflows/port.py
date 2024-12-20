@@ -8,11 +8,11 @@ from constants import PORT_API_URL
 from helper import calculate_time_delta, get_port_context, get_env_var
 
 
-def send_post_request(url, headers, data):
+def send_post_request(url, headers, params, data):
     """
     Helper function to send POST requests and handle errors.
     """
-    response = requests.post(url, headers=headers, json=data)
+    response = requests.post(url, headers=headers, params=params, json=data)
 
     if response.status_code != 200 and response.status_code != 201:
         logging.info("response.status_code: %s", response.status_code)
@@ -48,7 +48,7 @@ def post_log(message, token="", run_id=""):
     url = f'{PORT_API_URL}/actions/runs/{run_id}/logs'
     headers = get_port_api_headers(token)
     data = {"message": message}
-    response = send_post_request(url, headers, data)
+    response = send_post_request(url, headers, params="", data=data)
 
     if response:
         logging.info("Successfully posted log: %s", message)
@@ -86,7 +86,12 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
     time_bounded = ttl != "Indefinite"
 
     ttl = calculate_time_delta(ttl)
-    logging.info("ttl: %s", ttl)
+
+    params = {
+        "run_id": port_env_context["runId"],
+        "upsert": "true"
+    }
+
     data = {
         "identifier": f"environment_{os.urandom(4).hex()}",
         "title": "Environment",
@@ -100,7 +105,7 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
         }
     }
 
-    response = send_post_request(url, headers, data)
+    response = send_post_request(url, headers, params, data)
 
     if response:
         e_id = response.json()["entity"]["identifier"]
@@ -108,7 +113,7 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
 
         logging.info(f"Successfully created environment e_id: {e_id}")
 
-        post_log(f'✅ Environment (<a href="{link}" target="_blank">{e_id}</a>) successfully created! 🥳 Ready to deploy 🚀',
+        post_log(f'✅ Environment ({e_id}) successfully created! 🥳 Ready to deploy 🚀',
                  run_id=port_env_context["runId"])
         return response.json()["entity"]["identifier"]
 
