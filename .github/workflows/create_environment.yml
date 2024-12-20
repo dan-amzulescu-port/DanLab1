@@ -40,5 +40,4 @@ jobs:
       id: create_environment
       run: |
           python .github/workflows/create_environment.py create_environment
-          python .github/workflows/create_environment.py post_log \
-            --message '✅ Environment successfully created! 🥳 Ready to deploy 🚀'
+

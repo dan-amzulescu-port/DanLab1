@@ -1,16 +1,20 @@
-def create_s3_args(subparsers):
-    create_resource_parser = subparsers.add_parser("create_s3_cloud_resource")
-    create_resource_parser.add_argument("--prefix", required=True, help="S3 Prefix")
-    create_resource_parser.add_argument("--project", required=True, help="Project name")
-    create_resource_parser.add_argument("--token", required=True, help="PORT JWT token")
-    create_resource_parser.add_argument("--env", required=True, help="env_identifier")
+import logging
 
-def create_ec2_args(subparsers):
-    create_resource_parser = subparsers.add_parser("create_ec2_cloud_resource")
-    create_resource_parser.add_argument("--EC2_Size", required=True, help="EC2_Size")
-    create_resource_parser.add_argument("--project", required=True, help="Project name")
-    create_resource_parser.add_argument("--token", required=True, help="PORT JWT token")
-    create_resource_parser.add_argument("--env", required=True, help="env_identifier")
+from helper import set_env_var, get_env_var
+from port import get_port_token, post_log, create_environment, create_ec2_cloud_resource, create_s3_cloud_resource
+
+
+def execute_command(args):
+    match args.command:
+        case "get_token":
+            set_env_var("PORT_TOKEN", get_port_token(args.client_id, args.client_secret))
+            logging.info(f"Successfully set PORT_TOKEN=({get_env_var("PORT_TOKEN")}) environment variable.")
+        case "post_log":
+            post_log(args.message, args.token, args.run_id)
+        case "create_environment":
+            return create_environment()
+        case _:
+            print("Invalid command")
 
 
 def create_environment_args(subparsers):
@@ -34,10 +38,13 @@ def get_token_args(subparsers):
     get_token_parser.add_argument("--client_secret", required=True, help="Port client secret")
 
 
-def print_inputs_args(subparsers):
-    print_inputs_parser = subparsers.add_parser("print_inputs")
-    print_inputs_parser.add_argument("--requires_s3", required=True, help="Does this workflow require S3?")
-    print_inputs_parser.add_argument("--requires_ec2", required=True, help="Does this workflow require EC2?")
-    print_inputs_parser.add_argument("--project", required=True, help="Project name")
-    print_inputs_parser.add_argument("--ttl", required=True, help="Time to live (TTL) for the environment")
-    print_inputs_parser.add_argument("--all", required=True, help="---")
+def add_arguments_for_commands(subparsers):
+    # Subcommand: get_token
+    get_token_args(subparsers)
+    # Subcommand: post_log
+    post_log_args(subparsers)
+    # Subcommand: create_environment
+    create_environment_args(subparsers)
+    # Subcommand: create_cloud_resource
+    create_ec2_args(subparsers)
+    create_s3_args(subparsers)
