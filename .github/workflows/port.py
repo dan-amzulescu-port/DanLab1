@@ -37,17 +37,12 @@ def get_port_token(client_id:str = "", client_secret:str = "") -> Optional[str]:
     return response.json().get("accessToken")
 
 
-def get_env_var_context():
-    port_context = os.getenv('PORT_CONTEXT', None)
-    logging.info(f"-----------port_context: {port_context}")
-    return json.loads(port_context.strip('"').replace('\\"', '"'))
-
 
 def post_log(message, token="", run_id=""):
     """
     Post a log entry to Port.
     """
-    env_var_context = get_env_var_context()
+    env_var_context = get_port_context()
 
     url = f"{PORT_API_URL}/actions/runs/{env_var_context["run_id"]}/logs"
     headers = get_port_api_headers(token)

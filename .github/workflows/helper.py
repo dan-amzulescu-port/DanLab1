@@ -8,38 +8,6 @@ from typing import Optional
 import pytz
 
 
-def sanitize_to_json(raw_context: str) -> str:
-    """
-    Converts a malformed JSON-like string into valid JSON.
-
-    Args:
-        raw_context (str): The malformed JSON-like string.
-
-    Returns:
-        str: A valid JSON string.
-    """
-    # Remove single quotes wrapping the entire string
-
-    if raw_context.startswith("'") and raw_context.endswith("'"):
-        raw_context = raw_context[1:-1]
-
-    # Replace single quotes with double quotes
-    sanitized = raw_context.replace("'", '"')
-
-    # Enclose unquoted keys and values with double quotes
-    sanitized = re.sub(r'(\b[a-zA-Z0-9_]+\b):', r'"\1":', sanitized)
-    sanitized = re.sub(r':\s*([a-zA-Z0-9_.+-]+)', r': "\1"', sanitized)
-
-    # Correct specific JSON formatting issues
-    sanitized = sanitized.replace(': "true"', ': true')
-    sanitized = sanitized.replace(': "false"', ': false')
-    sanitized = sanitized.replace(': "null"', ': null')
-
-    # Ensure properly formatted date strings
-    sanitized = re.sub(r'"([0-9]{4}-[0-9]{2}-[0-9]{2})-([0-9T:.Z]+)"', r'"\1T\2"', sanitized)
-
-    return sanitized
-
 def get_port_context():
     try:
         port_context_raw = get_env_var('PORT_CONTEXT')
