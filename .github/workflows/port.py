@@ -1,7 +1,7 @@
 import logging
 import os
 from typing import Optional
-
+import random
 import requests
 
 from constants import PORT_API_URL
@@ -68,16 +68,16 @@ def get_port_api_headers(token:str = ""):
 def create_environment(project: str = '', ttl: str = '', triggered_by: str = ''):
 #     """
 #     Create an environment entity in Port.
-    port_env_context = get_port_context()
+
     try:
+        port_env_context = get_port_context()
         url = f"{PORT_API_URL}/blueprints/environment/entities"
         headers = get_port_api_headers()
+        params = {"run_id": port_env_context["runId"], "upsert": "true"}
 
         project = port_env_context["inputs"]["project"].get("identifier", project)
         triggered_by = port_env_context.get("triggered_by", triggered_by)
         ttl = calculate_time_delta(port_env_context["inputs"].get("ttl", ttl))
-
-        params = {"run_id": port_env_context["runId"], "upsert": "true"}
 
         data = {
             "identifier": f"environment_{os.urandom(4).hex()}",
@@ -109,43 +109,75 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
         post_log(f'❌ Error occurred while creating environment: {str(e)}', run_id=port_env_context["runId"])
 
 def create_environment_cloud_resources(e_id: str):
+    if not e_id:
+        logging.error("Environment ID is not provided.")
+        raise RuntimeError("Environment ID is not provided.")
     port_env_context = get_port_context()
+    try:
+        token = get_env_var("PORT_TOKEN")
+        if port_env_context["inputs"].get("requires_ec_2", False):
+            create_cloud_resource(e_id, "EC2", token)
+        if port_env_context["inputs"].get("requires_s_3", False):
+            create_s3_cloud_resource(e_id, "S3", token)
+    except Exception as e:
+        logging.error(f"Error occurred while creating cloud resources: {str(e)}")
+        post_log(f'❌ Error occurred while creating cloud resources: {str(e)}', run_id=port_env_context["runId"])
 
 
-def create_ec2_cloud_resource(project, resource_type, token):
+def create_cloud_resource(kind: str = ''):
     """
-    Create a cloud resource entity in Port.
+    Create a cloud resource entity (EC2 or S3) in Port.
     """
-    url = f"{PORT_API_URL}/blueprints/cloudResource/entities"
+    try:
+        port_env_context = get_port_context()
+        url = f"{PORT_API_URL}/blueprints/cloudResource/entities"
+        headers = get_port_api_headers()
+        params = {"run_id": port_env_context["runId"], "upsert": "true"}
 
-    port_env_context = get_port_context()
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {token}"
-    }
-    params = {
-        "run_id": port_env_context["runId"],
-        "upsert": "true"
-    }
-    data = {
-        "identifier": f"{resource_type}_{os.urandom(4).hex()}",
-        "title": f"{resource_type.capitalize()} Resource",
-        "properties": {
-            "kind": resource_type,
-            "region": "us-east-1",  # Example region
-            "status": "provisioning"
-        },
-        "relations": {
-            "environment": [project]
+        project = port_env_context["inputs"]["project"].get("identifier", None)
+        triggered_by = port_env_context.get("triggered_by", None)
+
+        region = random.choice(["us-west-1", "us-east-1", "eu-central-1"])
+        tags = { "Owner": triggered_by, "project": project}
+        link = f"https://{kind}.{region}.aws.com/resource"
+        status = random.choice(["running", "stopped", "provisioning"])
+
+        data = {
+            "identifier": f"cloudResource_{kind}_{os.urandom(4).hex()}",
+            "title": f"{kind} Resource",
+            "properties": {
+                "kind": kind,
+                "region": region,
+                "tags": tags,
+                "link": link,
+                "status": "provisioning"
+            },
+            "relations": {
+                "project": project,
+                "triggered_by": triggered_by
+            }
         }
-    }
 
-    response = send_post_request(url, headers, params, data)
+        response = send_post_request(url, headers, params, data)
 
-    if response:
-        logging.info("Successfully created cloud resource: %s", data["identifier"])
+        if response:
+            resource_id = response.json().get("entity", {}).get("identifier", "")
+            if resource_id:
+                logging.debug(f"Successfully created cloud resource with ID: {resource_id}")
+                post_log(f'✅ Cloud resource ({resource_id}) successfully created! 🥳',
+                         run_id=port_env_context["runId"])
+            else:
+                logging.error("Cloud resource creation failed. No valid 'identifier' in response.")
+                post_log(f'❌ Failed to create cloud resource.', run_id=port_env_context["runId"])
+        else:
+            logging.error("Cloud resource creation failed. No response received.")
+            post_log(f'❌ Failed to create cloud resource due to API error.', run_id=port_env_context["runId"])
 
-def create_s3_cloud_resource(project, resource_type, token):
+    except Exception as e:
+        logging.error(f"Error occurred while creating cloud resource: {str(e)}")
+        post_log(f'❌ Error occurred while creating cloud resource: {str(e)}', run_id=port_env_context["runId"])
+
+def create_s3_cloud_resource(project, token):
     """
     Create a cloud resource entity in Port.
     """
