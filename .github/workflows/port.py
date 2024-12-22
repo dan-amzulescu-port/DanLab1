@@ -115,7 +115,6 @@ def create_environment_cloud_resources(e_id: str):
         raise RuntimeError("Environment ID is not provided.")
     port_env_context = get_port_context()
     try:
-        token = get_env_var("PORT_TOKEN")
         if port_env_context["inputs"].get("requires_ec_2", False):
             create_cloud_resource(e_id, "EC2")
         if port_env_context["inputs"].get("requires_s_3", False):
@@ -156,8 +155,7 @@ def create_cloud_resource(e_id:str = '', kind: str = ''):
                 "status": status
             },
             "relations": {
-                "project": project,
-                "triggered_by": triggered_by
+                "environment": e_id
             }
         }
 
