@@ -69,8 +69,9 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
 #     """
 #     Create an environment entity in Port.
 
+    port_env_context = get_port_context()
     try:
-        port_env_context = get_port_context()
+
         url = f"{PORT_API_URL}/blueprints/environment/entities"
         headers = get_port_api_headers()
         params = {"run_id": port_env_context["runId"], "upsert": "true"}
@@ -116,20 +117,22 @@ def create_environment_cloud_resources(e_id: str):
     try:
         token = get_env_var("PORT_TOKEN")
         if port_env_context["inputs"].get("requires_ec_2", False):
-            create_cloud_resource(e_id, "EC2", token)
+            create_cloud_resource(e_id, "EC2")
         if port_env_context["inputs"].get("requires_s_3", False):
-            create_s3_cloud_resource(e_id, "S3", token)
+            create_cloud_resource(e_id, "S3")
     except Exception as e:
         logging.error(f"Error occurred while creating cloud resources: {str(e)}")
         post_log(f'❌ Error occurred while creating cloud resources: {str(e)}', run_id=port_env_context["runId"])
 
 
-def create_cloud_resource(kind: str = ''):
+def create_cloud_resource(e_id:str = '', kind: str = ''):
     """
     Create a cloud resource entity (EC2 or S3) in Port.
     """
+
+    port_env_context = get_port_context()
     try:
-        port_env_context = get_port_context()
+
         url = f"{PORT_API_URL}/blueprints/cloudResource/entities"
         headers = get_port_api_headers()
         params = {"run_id": port_env_context["runId"], "upsert": "true"}
@@ -150,7 +153,7 @@ def create_cloud_resource(kind: str = ''):
                 "region": region,
                 "tags": tags,
                 "link": link,
-                "status": "provisioning"
+                "status": status
             },
             "relations": {
                 "project": project,
@@ -176,35 +179,3 @@ def create_cloud_resource(kind: str = ''):
     except Exception as e:
         logging.error(f"Error occurred while creating cloud resource: {str(e)}")
         post_log(f'❌ Error occurred while creating cloud resource: {str(e)}', run_id=port_env_context["runId"])
-
-def create_s3_cloud_resource(project, token):
-    """
-    Create a cloud resource entity in Port.
-    """
-    url = f"{PORT_API_URL}/blueprints/cloudResource/entities"
-    port_env_context = get_port_context()
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {token}"
-    }
-    params = {
-        "run_id": port_env_context["runId"],
-        "upsert": "true"
-    }
-    data = {
-        "identifier": f"{resource_type}_{os.urandom(4).hex()}",
-        "title": f"{resource_type.capitalize()} Resource",
-        "properties": {
-            "kind": resource_type,
-            "region": "us-east-1",  # Example region
-            "status": "provisioning"
-        },
-        "relations": {
-            "environment": [project]
-        }
-    }
-
-    response = send_post_request(url, headers, params, data)
-
-    if response:
-        logging.info("Successfully created cloud resource: %s", data["identifier"])
