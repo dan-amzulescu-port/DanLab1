@@ -128,7 +128,7 @@ def create_cloud_resource(e_id:str = '', kind: str = ''):
     """
     Create a cloud resource entity (EC2 or S3) in Port.
     """
-
+    logging.info(f"Creating cloud resource of kind: {kind}")
     port_env_context = get_port_context()
     try:
 
@@ -160,7 +160,7 @@ def create_cloud_resource(e_id:str = '', kind: str = ''):
         }
 
         response = send_post_request(url, headers, params, data)
-
+        logging.info(f"Response: {response}")
         if response:
             resource_id = response.json().get("entity", {}).get("identifier", "")
             if resource_id:
