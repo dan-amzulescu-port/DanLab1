@@ -100,7 +100,7 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
             logging.debug(f"Successfully created environment e_id: {e_id}")
             post_log(f'✅ Environment ({e_id}) successfully created! 🥳 Ready to deploy 🚀',
                      run_id=port_env_context["runId"])
-            # create_environment_cloud_resources(env=e_id)
+            create_environment_cloud_resources(e_id=e_id)
         else:
             logging.error("Environment creation failed. No valid 'identifier' in response.")
             post_log(f'❌ Failed to create environment.', run_id=port_env_context["runId"])
