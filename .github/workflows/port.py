@@ -115,6 +115,7 @@ def create_environment_cloud_resources(e_id: str):
         raise RuntimeError("Environment ID is not provided.")
     port_env_context = get_port_context()
     try:
+        logging.info("Creating cloud resources for the environment.")
         if port_env_context["inputs"].get("requires_ec_2", False):
             create_cloud_resource(e_id, "EC2")
         if port_env_context["inputs"].get("requires_s_3", False):
