@@ -40,5 +40,5 @@ jobs:
     - name: Create environment
       id: create_environment
       run: |
-        python .github/workflows/port_gha_orchestrator create_environment
+        python .github/workflows/port_gha_orchestrator.py create_environment
       continue-on-error: false
