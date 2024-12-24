@@ -169,12 +169,10 @@ def create_cloud_resource(e_id:str = '', kind: str = ''):
     logging.info(f"Creating cloud resource of kind: {kind}")
     port_env_context = get_port_context()
     try:
-
-        project = port_env_context["inputs"]["project"].get("identifier", None)
         triggered_by = port_env_context.get("triggered_by", None)
 
         region = random.choice(["us-west-1", "us-east-1", "eu-central-1"])
-        tags = { "Owner": triggered_by, "project": project}
+        tags = { "Owner": triggered_by, "Environment": e_id }
         link = f"https://{kind}.{region}.aws.com/resource"
         status = random.choice(["running", "stopped", "provisioning"])
 
