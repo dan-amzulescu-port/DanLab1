@@ -5,7 +5,8 @@ import random
 import requests
 
 from constants import PORT_API_URL
-from env_var_helper import calculate_time_delta, get_port_context, get_env_var
+from env_var_helper import get_port_context, get_env_var
+from misc_helers import calculate_time_delta
 
 
 def send_post_request(url, headers, params, data):
