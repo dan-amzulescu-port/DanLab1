@@ -5,7 +5,7 @@ import random
 import requests
 
 from constants import PORT_API_URL
-from helper import calculate_time_delta, get_port_context, get_env_var
+from env_var_helper import calculate_time_delta, get_port_context, get_env_var
 
 
 def send_post_request(url, headers, params, data):
@@ -20,7 +20,6 @@ def send_post_request(url, headers, params, data):
 
     return response
 
-
 def get_port_token(client_id:str = "", client_secret:str = "") -> Optional[str]:
     """
     Retrieve the PORT JWT Token using the provided client credentials.
@@ -34,7 +33,6 @@ def get_port_token(client_id:str = "", client_secret:str = "") -> Optional[str]:
         raise RuntimeError("Failed to retrieve PORT JWT Token.")
 
     return response.json().get("accessToken")
-
 
 def post_log(message, token="", run_id=""):
     """
@@ -51,7 +49,6 @@ def post_log(message, token="", run_id=""):
     if not response:
         logging.error(f"Error writing log message {message} to Port.")
 
-
 def get_port_api_headers(token:str = ""):
     if not token:
         token = get_env_var("PORT_TOKEN")
@@ -64,6 +61,33 @@ def get_port_api_headers(token:str = ""):
     }
     return headers
 
+def create_entity(blueprint: str, data: dict, upsert: bool = True):
+    """
+    Create an entity in Port.
+    """
+    port_env_context = get_port_context()
+    try:
+        url = f"{PORT_API_URL}/blueprints/{blueprint}/entities"
+        headers = get_port_api_headers()
+        params = {"run_id": port_env_context["runId"], "upsert": "true"} if upsert else None
+
+        response = send_post_request(url, headers, params, data)
+
+        if response:
+            e_id = response.json()["entity"]["identifier"]
+            logging.debug(f"Successfully created entity {e_id} in {blueprint} blueprint")
+            post_log(f'✅ Successfully created entity {e_id} in {blueprint} blueprint! 🥳',
+                     run_id=port_env_context["runId"])
+            return response
+        else:
+            logging.error(f"entity creation in {blueprint} failed. No valid 'identifier' in response.")
+            post_log(f'❌ Failed to create entity in {blueprint}.', run_id=port_env_context["runId"])
+            raise RuntimeError(f"Failed to create entity in {blueprint}.")
+
+    except Exception as e:
+        logging.error(f"Error occurred while creating {blueprint}: {str(e)}")
+        post_log(f'❌ Error occurred while creating {blueprint}: {str(e)}', run_id=port_env_context["runId"])
+        raise RuntimeError(f"Error occurred while creating {blueprint}: {str(e)}")
 
 def create_environment(project: str = '', ttl: str = '', triggered_by: str = ''):
 #     """
@@ -71,11 +95,6 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
 
     port_env_context = get_port_context()
     try:
-
-        url = f"{PORT_API_URL}/blueprints/environment/entities"
-        headers = get_port_api_headers()
-        params = {"run_id": port_env_context["runId"], "upsert": "true"}
-
         project = port_env_context["inputs"]["project"].get("identifier", project)
         triggered_by = port_env_context.get("triggered_by", triggered_by)
         ttl = calculate_time_delta(port_env_context["inputs"].get("ttl", ttl))
@@ -93,7 +112,7 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
             }
         }
 
-        response = send_post_request(url, headers, params, data)
+        response = create_entity("environment", data, True)
 
         if response:
             e_id = response.json()["entity"]["identifier"]
@@ -108,14 +127,11 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
     except Exception as e:
         logging.error(f"Error occurred while creating environment: {str(e)}")
         post_log(f'❌ Error occurred while creating environment: {str(e)}', run_id=port_env_context["runId"])
+        raise RuntimeError(f"Error occurred while creating environment: {str(e)}")
 
 def create_environment_cloud_resources(e_id: str):
-    if not e_id:
-        logging.error("Environment ID is not provided.")
-        raise RuntimeError("Environment ID is not provided.")
     port_env_context = get_port_context()
     try:
-        logging.info("Creating cloud resources for the environment.")
         if port_env_context["inputs"].get("requires_ec_2", False):
             create_cloud_resource(e_id, "EC2")
         if port_env_context["inputs"].get("requires_s_3", False):
@@ -123,7 +139,7 @@ def create_environment_cloud_resources(e_id: str):
     except Exception as e:
         logging.error(f"Error occurred while creating cloud resources: {str(e)}")
         post_log(f'❌ Error occurred while creating cloud resources: {str(e)}', run_id=port_env_context["runId"])
-
+        raise RuntimeError(f"Error occurred while creating cloud resources: {str(e)}")
 
 def create_cloud_resource(e_id:str = '', kind: str = ''):
     """
@@ -132,10 +148,6 @@ def create_cloud_resource(e_id:str = '', kind: str = ''):
     logging.info(f"Creating cloud resource of kind: {kind}")
     port_env_context = get_port_context()
     try:
-
-        url = f"{PORT_API_URL}/blueprints/cloudResource/entities"
-        headers = get_port_api_headers()
-        params = {"run_id": port_env_context["runId"], "upsert": "true"}
 
         project = port_env_context["inputs"]["project"].get("identifier", None)
         triggered_by = port_env_context.get("triggered_by", None)
@@ -159,9 +171,8 @@ def create_cloud_resource(e_id:str = '', kind: str = ''):
                 "environment": e_id
             }
         }
+        response = create_entity("cloudResource", data, True)
 
-        response = send_post_request(url, headers, params, data)
-        logging.info(f"Response: {response}")
         if response:
             resource_id = response.json().get("entity", {}).get("identifier", "")
             if resource_id:

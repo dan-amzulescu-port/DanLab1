@@ -40,6 +40,5 @@ jobs:
     - name: Create environment
       id: create_environment
       run: |
-        python .github/workflows/create_environment.py create_environment \
-            --token "${{ steps.get_token.outputs.token }}"
+        python .github/workflows/create_environment.py create_environment
       continue-on-error: false
