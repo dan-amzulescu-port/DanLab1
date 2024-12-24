@@ -37,8 +37,8 @@ jobs:
             --client_secret "${{ secrets.PORT_CLIENT_SECRET }}"
       continue-on-error: false
 
-    - name: Create environment
+    - name: Add EC2 to Environment
       id: create_environment
       run: |
-        python .github/workflows/create_environment.py port_gha_orchestrator
+        python .github/workflows/port_gha_orchestrator.py add_ec2_to_environment
       continue-on-error: false

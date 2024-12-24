@@ -22,6 +22,9 @@ class ArgsParser:
         elif self.args.command == "create_environment":
             from port import create_environment
             create_environment(self.args.project, self.args.ttl, self.args.triggered_by)
+        elif self.args.command == "add_ec2_to_environment":
+            from port import add_ec2_to_environment
+            add_ec2_to_environment()
         else:
             print("Invalid command")
 
@@ -29,6 +32,7 @@ class ArgsParser:
         self._get_token_args()
         self._post_log_args()
         self._create_environment_args()
+        self._add_ec2_to_environment_args()
 
     def _create_environment_args(self):
         create_env_parser = self.subparsers.add_parser("create_environment")
@@ -36,6 +40,11 @@ class ArgsParser:
         create_env_parser.add_argument("--token", required=False, help="PORT JWT token")
         create_env_parser.add_argument("--ttl", required=False, help="ttl of the ENV")
         create_env_parser.add_argument("--triggered_by", required=False, help="who triggered deployment userIdentifier")
+
+    def _add_ec2_to_environment_args(self):
+        create_env_parser = self.subparsers.add_parser("add_ec2_to_environment")
+        create_env_parser.add_argument("--env", required=False, help="Env ID")
+        create_env_parser.add_argument("--token", required=False, help="PORT JWT token")
 
     def _post_log_args(self):
         post_log_parser = self.subparsers.add_parser("post_log")

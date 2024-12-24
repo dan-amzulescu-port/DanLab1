@@ -143,6 +143,24 @@ def create_environment_cloud_resources(e_id: str):
         post_log(f'❌ Error occurred while creating cloud resources: {str(e)}', run_id=port_env_context["runId"])
         raise RuntimeError(f"Error occurred while creating cloud resources: {str(e)}")
 
+def add_ec2_to_environment():
+    """
+    Add an EC2 instance to an environment in Port.
+    """
+    port_env_context = get_port_context()
+    try:
+        env_id = port_env_context["inputs"]["environment"].get("identifier", "")
+        if not env_id:
+            logging.error("Environment identifier not found in the context.")
+            post_log(f'❌ Environment identifier not found in the context.', run_id=port_env_context["runId"])
+            raise RuntimeError("Environment identifier not found in the context.")
+
+        create_cloud_resource(e_id=env_id, kind="EC2")
+    except Exception as e:
+        logging.error(f"Error occurred while adding EC2 to environment: {str(e)}")
+        post_log(f'❌ Error occurred while adding EC2 to environment: {str(e)}', run_id=port_env_context["runId"])
+        raise RuntimeError(f"Error occurred while adding EC2 to environment: {str(e)}")
+
 def create_cloud_resource(e_id:str = '', kind: str = ''):
     """
     Create a cloud resource entity (EC2 or S3) in Port.
