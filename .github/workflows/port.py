@@ -98,10 +98,12 @@ def create_environment(project: str = '', ttl: str = '', triggered_by: str = '')
         project = port_env_context["inputs"]["project"].get("identifier", project)
         triggered_by = port_env_context.get("triggered_by", triggered_by)
         ttl = calculate_time_delta(port_env_context["inputs"].get("ttl", ttl))
+        env_rand = os.urandom(4).hex()
+        env_name = f"env_{env_rand}_{project}"
 
         data = {
-            "identifier": f"environment_{os.urandom(4).hex()}",
-            "title": "Environment",
+            "identifier": f"environment_{env_rand}",
+            "title": env_name,
             "properties": {
                 "time_bounded": ttl != "Indefinite",
                 "ttl": ttl  # Example default TTL
