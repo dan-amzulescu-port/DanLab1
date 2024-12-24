@@ -1,5 +1,7 @@
 import argparse
 
+from env_var_helper import set_env_var
+
 
 class ArgsParser:
     def __init__(self):
@@ -13,7 +15,7 @@ class ArgsParser:
         if self.args.command == "get_token":
             from port import get_port_token
             token = get_port_token(self.args.client_id, self.args.client_secret)
-
+            set_env_var("PORT_TOKEN", token)
         elif self.args.command == "post_log":
             from port import post_log
             post_log(self.args.message, self.args.token, self.args.run_id)
