@@ -22,7 +22,7 @@ class ArgsParser:
         elif self.args.command == "add_ec2_to_environment":
             add_ec2_to_environment()
         elif self.args.command == "create_k8s_cluster":
-            create_k8s_cluster()
+            create_k8s_cluster(self.args.project, self.args.ttl, self.args.triggered_by)
         else:
             print("Invalid command")
 
@@ -60,3 +60,5 @@ class ArgsParser:
         create_env_parser = self.subparsers.add_parser("create_k8s_cluster")
         create_env_parser.add_argument("--token", required=False, help="PORT JWT token")
         create_env_parser.add_argument("--project", required=False, help="Project name")
+        create_env_parser.add_argument("--ttl", required=False, help="ttl of the ENV")
+        create_env_parser.add_argument("--triggered_by", required=False, help="who triggered deployment userIdentifier")
