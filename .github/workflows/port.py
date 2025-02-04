@@ -90,6 +90,49 @@ def create_entity(blueprint: str, data: dict, upsert: bool = True):
         post_log(f'❌ Error occurred while creating {blueprint}: {str(e)}', run_id=port_env_context["runId"])
         raise RuntimeError(f"Error occurred while creating {blueprint}: {str(e)}")
 
+def create_k8s_cluster():
+    """
+    Create a Kubernetes cluster entity in Port.
+    """
+    port_env_context = get_port_context()
+    try:
+        project = port_env_context["inputs"]["project"].get("identifier", "")
+        triggered_by = port_env_context.get("triggered_by", "")
+        cluster_name_input = port_env_context.get("cluster_name", "")
+        cluster_rand = os.urandom(4).hex()
+        cluster_name = f"{cluster_name_input}_{project}_{cluster_rand}"
+
+        data = {
+            "identifier": f"k8s_cluster_{cluster_name}",
+            "title": cluster_name,
+            "properties": {
+                "region": random.choice(["us-west-1", "us-east-1", "eu-central-1"]),
+                "version": "1.21",
+                "node_count": 3,
+                "node_type": "t3.medium",
+                "tags": {"Owner": triggered_by, "Project": project}
+            },
+            "relations": {
+                "project": project
+            }
+        }
+
+        response = create_entity("k8sCluster", data, True)
+
+        if response:
+            cluster_id = response.json()["entity"]["identifier"]
+            logging.debug(f"Successfully created k8s cluster with ID: {cluster_id}")
+            post_log(f'✅ Kubernetes cluster ({cluster_id}) successfully created! 🥳',
+                     run_id=port_env_context["runId"])
+        else:
+            logging.error("Kubernetes cluster creation failed. No valid 'identifier' in response.")
+            post_log(f'❌ Failed to create Kubernetes cluster.', run_id=port_env_context["runId"])
+
+    except Exception as e:
+        logging.error(f"Error occurred while creating Kubernetes cluster: {str(e)}")
+        post_log(f'❌ Error occurred while creating Kubernetes cluster: {str(e)}', run_id=port_env_context["runId"])
+        raise RuntimeError(f"Error occurred while creating Kubernetes cluster: {str(e)}")
+
 def create_environment(project: str = '', ttl: str = '', triggered_by: str = ''):
 #     """
 #     Create an environment entity in Port.

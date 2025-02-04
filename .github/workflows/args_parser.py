@@ -1,5 +1,5 @@
 import argparse
-
+from port import add_ec2_to_environment, create_environment, post_log, get_port_token, create_k8s_cluster
 from env_var_helper import set_env_var
 
 
@@ -13,18 +13,16 @@ class ArgsParser:
 
     def execute_command(self):
         if self.args.command == "get_token":
-            from port import get_port_token
             token = get_port_token(self.args.client_id, self.args.client_secret)
             set_env_var("PORT_TOKEN", token)
         elif self.args.command == "post_log":
-            from port import post_log
             post_log(self.args.message, self.args.token, self.args.run_id)
         elif self.args.command == "create_environment":
-            from port import create_environment
             create_environment(self.args.project, self.args.ttl, self.args.triggered_by)
         elif self.args.command == "add_ec2_to_environment":
-            from port import add_ec2_to_environment
             add_ec2_to_environment()
+        elif self.args.command == "create_k8s_cluster":
+            create_k8s_cluster()
         else:
             print("Invalid command")
 
@@ -33,6 +31,7 @@ class ArgsParser:
         self._post_log_args()
         self._create_environment_args()
         self._add_ec2_to_environment_args()
+        self._create_k8s_cluster()
 
     def _create_environment_args(self):
         create_env_parser = self.subparsers.add_parser("create_environment")
@@ -56,3 +55,8 @@ class ArgsParser:
         get_token_parser = self.subparsers.add_parser("get_token")
         get_token_parser.add_argument("--client_id", required=True, help="Port client ID")
         get_token_parser.add_argument("--client_secret", required=True, help="Port client secret")
+
+    def _create_k8s_cluster(self):
+        create_env_parser = self.subparsers.add_parser("create_k8s_cluster")
+        create_env_parser.add_argument("--token", required=False, help="PORT JWT token")
+        create_env_parser.add_argument("--project", required=False, help="Project name")
