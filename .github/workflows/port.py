@@ -97,7 +97,7 @@ def restart_workload():
     port_env_context = get_port_context()
     try:
 
-        workload_name = port_env_context["inputs"].get("workload", "")
+        workload_name = port_env_context["inputs"]["entity"].get("identifier", "")
 
 
         post_log(f'fetching current status of the workload "{workload_name}" 🔍', run_id=port_env_context["runId"])
