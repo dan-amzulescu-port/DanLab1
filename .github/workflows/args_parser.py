@@ -1,5 +1,6 @@
 import argparse
-from port import add_ec2_to_environment, create_environment, post_log, get_port_token, create_k8s_cluster
+from port import (add_ec2_to_environment, create_environment, post_log, get_port_token, create_k8s_cluster,
+                  restart_workload)
 from env_var_helper import set_env_var
 
 
@@ -23,6 +24,8 @@ class ArgsParser:
             add_ec2_to_environment()
         elif self.args.command == "create_k8s_cluster":
             create_k8s_cluster(self.args.project, self.args.ttl, self.args.triggered_by)
+        elif self.args.command == "restart_workload":
+            restart_workload()
         else:
             print("Invalid command")
 
@@ -32,6 +35,7 @@ class ArgsParser:
         self._create_environment_args()
         self._add_ec2_to_environment_args()
         self._create_k8s_cluster()
+        self._restart_workload()
 
     def _create_environment_args(self):
         create_env_parser = self.subparsers.add_parser("create_environment")
@@ -62,3 +66,7 @@ class ArgsParser:
         create_env_parser.add_argument("--project", required=False, help="Project name")
         create_env_parser.add_argument("--ttl", required=False, help="ttl of the ENV")
         create_env_parser.add_argument("--triggered_by", required=False, help="who triggered deployment userIdentifier")
+
+    def _restart_workload(self):
+        create_env_parser = self.subparsers.add_parser("restart_workload")
+        create_env_parser.add_argument("--token", required=False, help="PORT JWT token")

@@ -90,6 +90,27 @@ def create_entity(blueprint: str, data: dict, upsert: bool = True):
         post_log(f'❌ Error occurred while creating {blueprint}: {str(e)}', run_id=port_env_context["runId"])
         raise RuntimeError(f"Error occurred while creating {blueprint}: {str(e)}")
 
+def restart_workload():
+    """
+    Create a Kubernetes cluster entity in Port.
+    """
+    port_env_context = get_port_context()
+    try:
+
+        workload_name = port_env_context["inputs"].get("workload", "")
+
+
+        post_log(f'fetching current status of the workload "{workload_name}" 🔍', run_id=port_env_context["runId"])
+        post_log(f'restarting workload "{workload_name}" with rolling update 🔄', run_id=port_env_context["runId"])
+        post_log(f'waiting for rollout to complete for workload "{workload_name}" ⏳', run_id=port_env_context["runId"])
+        post_log(f'workload "{workload_name}" has been successfully restarted ✅', run_id=port_env_context["runId"])
+        post_log(f'checking the updated status of workload "{workload_name}" 🆕', run_id=port_env_context["runId"])
+        post_log(f'workload "{workload_name}" is now running successfully 🚀', run_id=port_env_context["runId"])
+    except Exception as e:
+        logging.error(f"Error occurred while restarting workload: {str(e)}")
+        post_log(f'❌ Error occurred while restarting workload: {str(e)}', run_id=port_env_context["runId"])
+        raise RuntimeError(f"Error occurred while restarting workload: {str(e)}")
+
 def create_k8s_cluster(project: str = '', ttl: str = '', triggered_by: str = ''):
     """
     Create a Kubernetes cluster entity in Port.
