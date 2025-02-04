@@ -99,7 +99,7 @@ def create_k8s_cluster(project: str = '', ttl: str = '', triggered_by: str = '')
         project = port_env_context["inputs"]["project"].get("identifier", project)
         triggered_by = port_env_context.get("triggered_by", triggered_by)
         ttl = calculate_time_delta(port_env_context["inputs"].get("ttl", ttl))
-        cluster_name_input = port_env_context.get("cluster_name", "")
+        cluster_name_input = port_env_context["inputs"].get("cluster_name", "")
         cluster_rand = os.urandom(4).hex()
         cluster_name = f"{cluster_name_input}_{project}_{cluster_rand}"
 
