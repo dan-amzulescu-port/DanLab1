@@ -90,73 +90,94 @@ def create_entity(blueprint: str, data: dict, upsert: bool = True):
         post_log(f'❌ Error occurred while creating {blueprint}: {str(e)}', run_id=port_env_context["runId"])
         raise RuntimeError(f"Error occurred while creating {blueprint}: {str(e)}")
 
-def create_k8s_cluster():
+def create_k8s_cluster(project: str = '', ttl: str = '', triggered_by: str = ''):
     """
     Create a Kubernetes cluster entity in Port.
     """
     port_env_context = get_port_context()
     try:
-        project = port_env_context["inputs"]["project"].get("identifier", "")
-
+        project = port_env_context["inputs"]["project"].get("identifier", project)
+        triggered_by = port_env_context.get("triggered_by", triggered_by)
+        ttl = calculate_time_delta(port_env_context["inputs"].get("ttl", ttl))
         cluster_name_input = port_env_context.get("cluster_name", "")
         cluster_rand = os.urandom(4).hex()
         cluster_name = f"{cluster_name_input}_{project}_{cluster_rand}"
 
-        post_log(f'eksctl version 0.194.0 🚀', run_id=port_env_context["runId"])
-        post_log(f'using region us-east-1 🌍', run_id=port_env_context["runId"])
-        post_log(f'setting availability zones to [us-east-1a us-east-1b] 🌐', run_id=port_env_context["runId"])
-        post_log(f'subnets for us-east-1a - public:192.168.0.0/19 private:192.168.64.0/19 🏙️',
-                 run_id=port_env_context["runId"])
-        post_log(f'subnets for us-east-1b - public:192.168.32.0/19 private:192.168.96.0/19 🌆',
-                 run_id=port_env_context["runId"])
-        post_log(f'nodegroup "ng-598412f9" will use "" [AmazonLinux2/1.30] 🐧', run_id=port_env_context["runId"])
-        post_log(f'using Kubernetes version 1.30 🧑‍💻', run_id=port_env_context["runId"])
-        post_log(f'creating EKS cluster "{cluster_name}" in "us-east-1" region with managed nodes 🎉',
-                 run_id=port_env_context["runId"])
-        post_log(f'will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup 📦',
-                 run_id=port_env_context["runId"])
-        post_log(
-            f'if you encounter any issues, check CloudFormation console or try "eksctl utils describe-stacks --region=us-east-1 --cluster={cluster_name}" 🛠️',
-            run_id=port_env_context["runId"])
-        post_log(
-            f'Kubernetes API endpoint access will use default of {{publicAccess=true, privateAccess=false}} for cluster "{cluster_name}" in "us-east-1" 🌐',
-            run_id=port_env_context["runId"])
-        post_log(f'CloudWatch logging will not be enabled for cluster "{cluster_name}" in "us-east-1" 📉',
-                 run_id=port_env_context["runId"])
-        post_log(
-            f'you can enable it with "eksctl utils update-cluster-logging --enable-types={{SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)}} --region=us-east-1 --cluster={cluster_name}" 🔧',
-            run_id=port_env_context["runId"])
-        post_log(f'default addons coredns, vpc-cni, kube-proxy were not specified, will install them as EKS addons 🛠️',
-                 run_id=port_env_context["runId"])
-        post_log(f'building cluster stack "eksctl-{cluster_name}-cluster" 🏗️', run_id=port_env_context["runId"])
-        post_log(f'deploying stack "eksctl-{cluster_name}-cluster" 📤', run_id=port_env_context["runId"])
-        post_log(f'waiting for CloudFormation stack "eksctl-{cluster_name}-cluster" ⏳',
-                 run_id=port_env_context["runId"])
-        post_log(f'creating addon ➕', run_id=port_env_context["runId"])
-        post_log(f'successfully created addon ✅', run_id=port_env_context["runId"])
-        post_log(
-            f'recommended policies were found for "vpc-cni" addon, but since OIDC is disabled on the cluster, eksctl cannot configure the requested permissions 🚨',
-            run_id=port_env_context["runId"])
-        post_log(f'creating addon ➕', run_id=port_env_context["runId"])
-        post_log(f'successfully created addon ✅', run_id=port_env_context["runId"])
-        post_log(f'building managed nodegroup stack "eksctl-{cluster_name}-nodegroup-ng-598412f9" 🏗️',
-                 run_id=port_env_context["runId"])
-        post_log(f'deploying stack "eksctl-{cluster_name}-nodegroup-ng-598412f9" 📤', run_id=port_env_context["runId"])
-        post_log(f'waiting for CloudFormation stack "eksctl-{cluster_name}-nodegroup-ng-598412f9" ⏳',
-                 run_id=port_env_context["runId"])
-        post_log(f'waiting for the control plane to become ready 🔄', run_id=port_env_context["runId"])
-        post_log(f'saved kubeconfig as "/home/dan/.kube/config" 📄', run_id=port_env_context["runId"])
-        post_log(f'all EKS cluster resources for "{cluster_name}" have been created 🎉',
-                 run_id=port_env_context["runId"])
-        post_log(f'created 1 managed nodegroup(s) in cluster "{cluster_name}" ✅', run_id=port_env_context["runId"])
-        post_log(f'nodegroup "ng-598412f9" has 3 node(s) 🖥️', run_id=port_env_context["runId"])
-        post_log(f'node "ip-192-168-15-185.ec2.internal" is ready ✅', run_id=port_env_context["runId"])
-        post_log(f'node "ip-192-168-23-133.ec2.internal" is ready ✅', run_id=port_env_context["runId"])
-        post_log(f'node "ip-192-168-63-179.ec2.internal" is ready ✅', run_id=port_env_context["runId"])
-        post_log(f'waiting for at least 2 node(s) to become ready in "ng-598412f9" ⏳', run_id=port_env_context["runId"])
-        post_log(f'kubectl command should work with "/home/dan/.kube/config", try "kubectl get nodes" 🖥️',
-                 run_id=port_env_context["runId"])
-        post_log(f'EKS cluster "{cluster_name}" in "us-east-1" region is ready 🎉', run_id=port_env_context["runId"])
+        data = {
+            "identifier": f"{cluster_name}",
+            "title": cluster_name,
+            "properties": {
+                "time_bounded": ttl != "Indefinite",
+                "ttl": ttl  # Example default TTL
+            },
+            "relations": {
+                "project": project,
+                "triggered_by": triggered_by
+            }
+        }
+
+        response = create_entity("cluster", data, True)
+
+        if response:
+
+            post_log(f'eksctl version 0.194.0 🚀', run_id=port_env_context["runId"])
+            post_log(f'using region us-east-1 🌍', run_id=port_env_context["runId"])
+            post_log(f'setting availability zones to [us-east-1a us-east-1b] 🌐', run_id=port_env_context["runId"])
+            post_log(f'subnets for us-east-1a - public:192.168.0.0/19 private:192.168.64.0/19 🏙️',
+                     run_id=port_env_context["runId"])
+            post_log(f'subnets for us-east-1b - public:192.168.32.0/19 private:192.168.96.0/19 🌆',
+                     run_id=port_env_context["runId"])
+            post_log(f'nodegroup "ng-598412f9" will use "" [AmazonLinux2/1.30] 🐧', run_id=port_env_context["runId"])
+            post_log(f'using Kubernetes version 1.30 🧑‍💻', run_id=port_env_context["runId"])
+            post_log(f'creating EKS cluster "{cluster_name}" in "us-east-1" region with managed nodes 🎉',
+                     run_id=port_env_context["runId"])
+            post_log(f'will create 2 separate CloudFormation stacks for cluster itself and the initial managed nodegroup 📦',
+                     run_id=port_env_context["runId"])
+            post_log(
+                f'if you encounter any issues, check CloudFormation console or try "eksctl utils describe-stacks --region=us-east-1 --cluster={cluster_name}" 🛠️',
+                run_id=port_env_context["runId"])
+            post_log(
+                f'Kubernetes API endpoint access will use default of {{publicAccess=true, privateAccess=false}} for cluster "{cluster_name}" in "us-east-1" 🌐',
+                run_id=port_env_context["runId"])
+            post_log(f'CloudWatch logging will not be enabled for cluster "{cluster_name}" in "us-east-1" 📉',
+                     run_id=port_env_context["runId"])
+            post_log(
+                f'you can enable it with "eksctl utils update-cluster-logging --enable-types={{SPECIFY-YOUR-LOG-TYPES-HERE (e.g. all)}} --region=us-east-1 --cluster={cluster_name}" 🔧',
+                run_id=port_env_context["runId"])
+            post_log(f'default addons coredns, vpc-cni, kube-proxy were not specified, will install them as EKS addons 🛠️',
+                     run_id=port_env_context["runId"])
+            post_log(f'building cluster stack "eksctl-{cluster_name}-cluster" 🏗️', run_id=port_env_context["runId"])
+            post_log(f'deploying stack "eksctl-{cluster_name}-cluster" 📤', run_id=port_env_context["runId"])
+            post_log(f'waiting for CloudFormation stack "eksctl-{cluster_name}-cluster" ⏳',
+                     run_id=port_env_context["runId"])
+            post_log(f'creating addon ➕', run_id=port_env_context["runId"])
+            post_log(f'successfully created addon ✅', run_id=port_env_context["runId"])
+            post_log(
+                f'recommended policies were found for "vpc-cni" addon, but since OIDC is disabled on the cluster, eksctl cannot configure the requested permissions 🚨',
+                run_id=port_env_context["runId"])
+            post_log(f'creating addon ➕', run_id=port_env_context["runId"])
+            post_log(f'successfully created addon ✅', run_id=port_env_context["runId"])
+            post_log(f'building managed nodegroup stack "eksctl-{cluster_name}-nodegroup-ng-598412f9" 🏗️',
+                     run_id=port_env_context["runId"])
+            post_log(f'deploying stack "eksctl-{cluster_name}-nodegroup-ng-598412f9" 📤', run_id=port_env_context["runId"])
+            post_log(f'waiting for CloudFormation stack "eksctl-{cluster_name}-nodegroup-ng-598412f9" ⏳',
+                     run_id=port_env_context["runId"])
+            post_log(f'waiting for the control plane to become ready 🔄', run_id=port_env_context["runId"])
+            post_log(f'saved kubeconfig as "/home/dan/.kube/config" 📄', run_id=port_env_context["runId"])
+            post_log(f'all EKS cluster resources for "{cluster_name}" have been created 🎉',
+                     run_id=port_env_context["runId"])
+            post_log(f'created 1 managed nodegroup(s) in cluster "{cluster_name}" ✅', run_id=port_env_context["runId"])
+            post_log(f'nodegroup "ng-598412f9" has 3 node(s) 🖥️', run_id=port_env_context["runId"])
+            post_log(f'node "ip-192-168-15-185.ec2.internal" is ready ✅', run_id=port_env_context["runId"])
+            post_log(f'node "ip-192-168-23-133.ec2.internal" is ready ✅', run_id=port_env_context["runId"])
+            post_log(f'node "ip-192-168-63-179.ec2.internal" is ready ✅', run_id=port_env_context["runId"])
+            post_log(f'waiting for at least 2 node(s) to become ready in "ng-598412f9" ⏳', run_id=port_env_context["runId"])
+            post_log(f'kubectl command should work with "/home/dan/.kube/config", try "kubectl get nodes" 🖥️',
+                     run_id=port_env_context["runId"])
+            post_log(f'EKS cluster "{cluster_name}" in "us-east-1" region is ready 🎉', run_id=port_env_context["runId"])
+        else:
+            logging.error("Was not able to create K8s Cluster")
+            post_log(f'❌ Failed to create K8s Cluster.', run_id=port_env_context["runId"])
 
 
     except Exception as e:
