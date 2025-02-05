@@ -29,7 +29,7 @@ class ArgsParser:
         elif self.args.command == "get_logs_workload":
             get_logs_workload()
         elif self.args.command == "resize_workload":
-            resize_workload(self.args.cpu_req, self.args.cpu_lim ,self.args.mem_req, self.args.mem_lim)
+            resize_workload()
         else:
             print("Invalid command")
 

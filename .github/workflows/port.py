@@ -90,8 +90,13 @@ def create_entity(blueprint: str, data: dict, upsert: bool = True):
         post_log(f'❌ Error occurred while creating {blueprint}: {str(e)}', run_id=port_env_context["runId"])
         raise RuntimeError(f"Error occurred while creating {blueprint}: {str(e)}")
 
-def resize_workload(cpu_req: str = '', cpu_lim: str = '', mem_req: str = '', mem_lim: str = ''):
+def resize_workload():
     port_env_context = get_port_context()
+
+    cpu_req = port_env_context["inputs"].get("cpu_request", "")
+    mem_req = port_env_context["inputs"].get("mem_request", "")
+    cpu_lim = port_env_context["inputs"].get("cpu_limit", "")
+    mem_lim = port_env_context["inputs"].get("mem_limit", "")
 
     workload_name = port_env_context["inputs"]["entity"].get("identifier", "")
 
