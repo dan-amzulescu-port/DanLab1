@@ -26,6 +26,8 @@ class ArgsParser:
             create_k8s_cluster(self.args.project, self.args.ttl, self.args.triggered_by)
         elif self.args.command == "restart_workload":
             restart_workload()
+        elif self.args.command == "get_logs_workload":
+            get_logs_workload()
         else:
             print("Invalid command")
 
