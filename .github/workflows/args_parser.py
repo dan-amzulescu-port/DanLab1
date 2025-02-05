@@ -38,6 +38,7 @@ class ArgsParser:
         self._add_ec2_to_environment_args()
         self._create_k8s_cluster()
         self._restart_workload()
+        self._get_logs_workload()
 
     def _create_environment_args(self):
         create_env_parser = self.subparsers.add_parser("create_environment")
