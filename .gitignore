@@ -62,4 +62,4 @@ build/
 *.idea/django_templates.xml
 *.idea/workspace.xdg.xml
 .idea/
-.github/workflows/tests.py
+.github/workflows/*tests.py
