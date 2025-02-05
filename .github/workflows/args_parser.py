@@ -1,6 +1,6 @@
 import argparse
 from port import (add_ec2_to_environment, create_environment, post_log, get_port_token, create_k8s_cluster,
-                  restart_workload)
+                  restart_workload, get_logs_workload)
 from env_var_helper import set_env_var
 
 
@@ -68,5 +68,9 @@ class ArgsParser:
         create_env_parser.add_argument("--triggered_by", required=False, help="who triggered deployment userIdentifier")
 
     def _restart_workload(self):
+        create_env_parser = self.subparsers.add_parser("restart_workload")
+        create_env_parser.add_argument("--token", required=False, help="PORT JWT token")
+
+    def _get_logs_workload(self):
         create_env_parser = self.subparsers.add_parser("restart_workload")
         create_env_parser.add_argument("--token", required=False, help="PORT JWT token")

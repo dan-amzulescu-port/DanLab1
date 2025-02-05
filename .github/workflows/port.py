@@ -90,6 +90,45 @@ def create_entity(blueprint: str, data: dict, upsert: bool = True):
         post_log(f'❌ Error occurred while creating {blueprint}: {str(e)}', run_id=port_env_context["runId"])
         raise RuntimeError(f"Error occurred while creating {blueprint}: {str(e)}")
 
+def get_logs_workload():
+    """
+    Create a Kubernetes cluster entity in Port.
+    """
+    port_env_context = get_port_context()
+    try:
+
+        workload_name = port_env_context["inputs"]["entity"].get("identifier", "")
+        post_log(f'initiating request to fetch logs for Kubernetes workload "{workload_name}" 📝',
+                 run_id=port_env_context["runId"])
+        post_log(f'checking the latest logs from workload "{workload_name}" 🧐', run_id=port_env_context["runId"])
+        post_log(f'retrieving the last 10 lines of logs for workload "{workload_name}" 📄',
+                 run_id=port_env_context["runId"])
+        post_log(f'logs retrieved successfully for workload "{workload_name}" ✅', run_id=port_env_context["runId"])
+        post_log(f'displaying the last 10 lines of logs for workload "{workload_name}" 📜',
+                 run_id=port_env_context["runId"])
+
+        # Simulating the 10 application log lines
+
+        post_log("2025-02-04 10:53:01 [INFO] Application started successfully. 🚀", run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:05 [DEBUG] Connection established with database. 🔗",
+                 run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:10 [ERROR] Failed to fetch resource from API endpoint! 🚨",
+                 run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:15 [INFO] Retrying to fetch resource... ⏳", run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:20 [INFO] Resource fetched successfully. 🎉", run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:25 [DEBUG] Parsing data for processing... 📊", run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:30 [WARN] Timeout encountered during data processing. ⏱️",
+                 run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:35 [INFO] Resuming data processing after retry. 🔄", run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:40 [ERROR] Unexpected issue occurred during processing. 🚧",
+                 run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:45 [INFO] Application shutdown initiated. ⛔", run_id=port_env_context["runId"])
+
+    except Exception as e:
+        logging.error(f"Error occurred while restarting workload: {str(e)}")
+        post_log(f'❌ Error occurred while restarting workload: {str(e)}', run_id=port_env_context["runId"])
+        raise RuntimeError(f"Error occurred while restarting workload: {str(e)}")
+
 def restart_workload():
     """
     Create a Kubernetes cluster entity in Port.
