@@ -90,16 +90,29 @@ def create_entity(blueprint: str, data: dict, upsert: bool = True):
         post_log(f'❌ Error occurred while creating {blueprint}: {str(e)}', run_id=port_env_context["runId"])
         raise RuntimeError(f"Error occurred while creating {blueprint}: {str(e)}")
 
+def resize_workload(cpu_req: str = '', cpu_lim: str = '', mem_req: str = '', mem_lim: str = ''):
+    port_env_context = get_port_context()
+
+    workload_name = port_env_context["inputs"]["entity"].get("identifier", "")
+
+    post_log(f'initiating patch for Kubernetes workload "{workload_name}" to update resource requests and limits 📝', run_id=port_env_context["runId"])
+    post_log(f'patching CPU and Memory requests and limits for workload "{workload_name}" 🔧', run_id=port_env_context["runId"])
+    post_log(f'updating CPU request to {cpu_req} and CPU limit to {cpu_lim} for workload "{workload_name}" ⚡', run_id=port_env_context["runId"])
+    post_log(f'updating Memory request to {mem_req} and Memory limit to {mem_lim} for workload "{workload_name}" 🧠', run_id=port_env_context["runId"])
+    post_log(f'waiting for patch to be applied successfully ⏳', run_id=port_env_context["runId"])
+    post_log(f'workload "{workload_name}" patched with new resource values ✅', run_id=port_env_context["runId"])
+    post_log(f'patch successful: CPU request = {cpu_req}, CPU limit = {cpu_lim}, Memory request = {mem_req}, Memory limit = {mem_lim} 🎉', run_id=port_env_context["runId"])
+    post_log(f'patch applied and workload "{workload_name}" is ready to use with updated resource values 🚀', run_id=port_env_context["runId"])
+
 def get_logs_workload():
-    """
-    Create a Kubernetes cluster entity in Port.
-    """
+
     port_env_context = get_port_context()
     try:
 
         workload_name = port_env_context["inputs"]["entity"].get("identifier", "")
         post_log(f'initiating request to fetch logs for Kubernetes workload "{workload_name}" 📝',
                  run_id=port_env_context["runId"])
+
         post_log(f'checking the latest logs from workload "{workload_name}" 🧐', run_id=port_env_context["runId"])
         post_log(f'retrieving the last 10 lines of logs for workload "{workload_name}" 📄',
                  run_id=port_env_context["runId"])
@@ -107,22 +120,26 @@ def get_logs_workload():
         post_log(f'displaying the last 10 lines of logs for workload "{workload_name}" 📜',
                  run_id=port_env_context["runId"])
 
-        # Simulating the 10 application log lines
+        # Updated application log lines reflecting a memory issue and panic mode
 
         post_log("2025-02-04 10:53:01 [INFO] Application started successfully. 🚀", run_id=port_env_context["runId"])
         post_log("2025-02-04 10:53:05 [DEBUG] Connection established with database. 🔗",
                  run_id=port_env_context["runId"])
-        post_log("2025-02-04 10:53:10 [ERROR] Failed to fetch resource from API endpoint! 🚨",
+        post_log("2025-02-04 10:53:10 [ERROR] Insufficient memory detected! 🚨", run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:15 [WARN] Memory usage is critically high. Going into panic mode. ⚠️",
                  run_id=port_env_context["runId"])
-        post_log("2025-02-04 10:53:15 [INFO] Retrying to fetch resource... ⏳", run_id=port_env_context["runId"])
-        post_log("2025-02-04 10:53:20 [INFO] Resource fetched successfully. 🎉", run_id=port_env_context["runId"])
-        post_log("2025-02-04 10:53:25 [DEBUG] Parsing data for processing... 📊", run_id=port_env_context["runId"])
-        post_log("2025-02-04 10:53:30 [WARN] Timeout encountered during data processing. ⏱️",
+        post_log("2025-02-04 10:53:20 [ERROR] Out of memory. Shutting down processes... 💥",
                  run_id=port_env_context["runId"])
-        post_log("2025-02-04 10:53:35 [INFO] Resuming data processing after retry. 🔄", run_id=port_env_context["runId"])
-        post_log("2025-02-04 10:53:40 [ERROR] Unexpected issue occurred during processing. 🚧",
+        post_log("2025-02-04 10:53:25 [DEBUG] Attempting to free up memory... 🔄", run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:30 [ERROR] Failed to release memory. Panic mode engaged! ⚠️💥",
                  run_id=port_env_context["runId"])
-        post_log("2025-02-04 10:53:45 [INFO] Application shutdown initiated. ⛔", run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:35 [CRITICAL] Application crashed due to memory overflow. 💣",
+                 run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:40 [INFO] Initiating system reboot to recover from panic. 🔄",
+                 run_id=port_env_context["runId"])
+        post_log("2025-02-04 10:53:45 [INFO] Application shutdown initiated due to memory failure. ⛔",
+                 run_id=port_env_context["runId"])
+
 
     except Exception as e:
         logging.error(f"Error occurred while restarting workload: {str(e)}")

@@ -1,6 +1,6 @@
 import argparse
 from port import (add_ec2_to_environment, create_environment, post_log, get_port_token, create_k8s_cluster,
-                  restart_workload, get_logs_workload)
+                  restart_workload, get_logs_workload, resize_workload)
 from env_var_helper import set_env_var
 
 
@@ -28,6 +28,8 @@ class ArgsParser:
             restart_workload()
         elif self.args.command == "get_logs_workload":
             get_logs_workload()
+        elif self.args.command == "resize_workload":
+            resize_workload(self.args.cpu_req, self.args.cpu_lim ,self.args.mem_req, self.args.mem_lim)
         else:
             print("Invalid command")
 
@@ -38,6 +40,7 @@ class ArgsParser:
         self._add_ec2_to_environment_args()
         self._create_k8s_cluster()
         self._restart_workload()
+        self._resize_workload()
         self._get_logs_workload()
 
     def _create_environment_args(self):
@@ -72,6 +75,10 @@ class ArgsParser:
 
     def _restart_workload(self):
         create_env_parser = self.subparsers.add_parser("restart_workload")
+        create_env_parser.add_argument("--token", required=False, help="PORT JWT token")
+
+    def _resize_workload(self):
+        create_env_parser = self.subparsers.add_parser("resize_workload")
         create_env_parser.add_argument("--token", required=False, help="PORT JWT token")
 
     def _get_logs_workload(self):
