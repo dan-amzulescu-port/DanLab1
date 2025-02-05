@@ -40,5 +40,5 @@ jobs:
     - name: Get logs from workload
       id: get_logs_workload
       run: |
-        python .github/workflows/port_gha_orchestrator.py create_environment
+        python .github/workflows/port_gha_orchestrator.py get_logs_workload
       continue-on-error: false
