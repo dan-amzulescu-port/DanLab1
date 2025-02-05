@@ -75,5 +75,5 @@ class ArgsParser:
         create_env_parser.add_argument("--token", required=False, help="PORT JWT token")
 
     def _get_logs_workload(self):
-        create_env_parser = self.subparsers.add_parser("restart_workload")
+        create_env_parser = self.subparsers.add_parser("get_logs_workload")
         create_env_parser.add_argument("--token", required=False, help="PORT JWT token")
