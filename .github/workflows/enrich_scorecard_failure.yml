@@ -1,0 +1,27 @@
+name: Handle degraded rule result
+
+on:
+  workflow_dispatch:
+    inputs:
+      rule_result_id:
+        description: "The rule result entity identifier"
+        required: true
+        type: string
+      rule_id:
+        description: "The rule entity identifier"
+        required: true
+        type: string
+      service_id:
+        description: "The service entity identifier that failed the rule"
+        required: true
+        type: string
+
+jobs:
+  print_inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print automation inputs
+        run: |
+          echo "Rule Result ID: ${{ inputs.rule_result_id }}"
+          echo "Rule ID:        ${{ inputs.rule_id }}"
+          echo "Service ID:     ${{ inputs.service_id }}"
