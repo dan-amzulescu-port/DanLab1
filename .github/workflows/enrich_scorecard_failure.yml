@@ -100,23 +100,26 @@ jobs:
           # For now, let's try a simpler fix: replace literal newlines that are inside string values
           # We'll use a more targeted approach
           
+          print("Step: Extract rule properties - Starting JSON parsing", file=sys.stderr)
+          print(f"Raw JSON length: {len(entity_json_raw)} characters", file=sys.stderr)
+          print(f"Raw JSON preview (first 200 chars): {entity_json_raw[:200]}", file=sys.stderr)
+          
           try:
               # First, try to parse as-is
+              print("Attempting initial JSON parse...", file=sys.stderr)
               entity = json.loads(entity_json_raw)
-          except json.JSONDecodeError:
-              # If that fails, try to fix newlines in string values
-              # Find all string values and escape newlines in them
-              fixed_json = entity_json_raw
-              
-              # Replace newlines that appear between quotes (string values)
-              # This is a simplified approach - find patterns like "text\nmore text"
-              # We'll use a regex that matches quoted strings and escapes newlines within them
+              print("✓ Initial JSON parse succeeded", file=sys.stderr)
+          except json.JSONDecodeError as initial_error:
+              print(f"✗ Initial JSON parse failed: {initial_error}", file=sys.stderr)
+              print(f"Error at position: {initial_error.pos if hasattr(initial_error, 'pos') else 'unknown'}", file=sys.stderr)
+              print("Attempting JSON repair (escaping control characters)...", file=sys.stderr)
               
               # More robust: iterate through and fix string values
               result = []
               i = 0
               in_string = False
               escape_next = False
+              chars_fixed = 0
               
               while i < len(entity_json_raw):
                   char = entity_json_raw[i]
@@ -132,31 +135,48 @@ jobs:
                       result.append(char)
                   elif in_string and char == '\n':
                       result.append('\\n')
+                      chars_fixed += 1
                   elif in_string and char == '\r':
                       result.append('\\r')
+                      chars_fixed += 1
                   elif in_string and char == '\t':
                       result.append('\\t')
+                      chars_fixed += 1
                   else:
                       result.append(char)
                   
                   i += 1
               
               fixed_json = ''.join(result)
+              print(f"JSON repair complete: fixed {chars_fixed} control characters", file=sys.stderr)
+              print(f"Fixed JSON preview (first 200 chars): {fixed_json[:200]}", file=sys.stderr)
               
               try:
                   entity = json.loads(fixed_json)
-              except json.JSONDecodeError as e:
-                  print(f"Error: Invalid JSON from rule entity: {e}", file=sys.stderr)
-                  print(f"JSON string (first 500 chars): {entity_json_raw[:500]}", file=sys.stderr)
+                  print("✓ JSON parse succeeded after repair", file=sys.stderr)
+              except json.JSONDecodeError as repair_error:
+                  print(f"✗ JSON parse failed after repair: {repair_error}", file=sys.stderr)
+                  print(f"Error at position: {repair_error.pos if hasattr(repair_error, 'pos') else 'unknown'}", file=sys.stderr)
+                  print(f"Error message: {repair_error.msg}", file=sys.stderr)
+                  print(f"Raw JSON (first 1000 chars): {entity_json_raw[:1000]}", file=sys.stderr)
+                  print(f"Fixed JSON (first 1000 chars): {fixed_json[:1000]}", file=sys.stderr)
                   sys.exit(1)
           
           # Extract properties
+          print("Extracting properties from parsed entity...", file=sys.stderr)
           properties = entity.get('properties', {})
           rule_description = properties.get('description', '')
           rule_template = properties.get('template', '')
           rule_team = entity.get('team', '')
           rule_title = entity.get('title') or entity.get('identifier', '')
           rule_identifier = entity.get('identifier', '')
+          
+          print(f"Extracted values:", file=sys.stderr)
+          print(f"  - rule_identifier: {rule_identifier}", file=sys.stderr)
+          print(f"  - rule_title: {rule_title}", file=sys.stderr)
+          print(f"  - rule_description length: {len(rule_description)} chars", file=sys.stderr)
+          print(f"  - rule_template length: {len(rule_template)} chars", file=sys.stderr)
+          print(f"  - rule_team: {rule_team}", file=sys.stderr)
           
           # Validate that description and template are not null/empty
           validation_failed = False
@@ -165,9 +185,13 @@ jobs:
           if not rule_description or rule_description == "null":
               validation_failed = True
               error_message = f"Rule description is missing or null for rule: {rule_identifier}"
+              print(f"✗ Validation failed: {error_message}", file=sys.stderr)
           elif not rule_template or rule_template == "null":
               validation_failed = True
               error_message = f"Rule template is missing or null for rule: {rule_identifier}"
+              print(f"✗ Validation failed: {error_message}", file=sys.stderr)
+          else:
+              print("✓ Validation passed: description and template are present", file=sys.stderr)
           
           # Set GitHub Actions outputs
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
@@ -219,41 +243,105 @@ jobs:
         if: steps.extract_rule.outputs.VALIDATION_FAILED == 'false'
         id: generate_template
         run: |
-          # Get entity information
-          ENTITY_JSON="${{ steps.get_entity.outputs.entity }}"
-          TITLE=$(echo "$ENTITY_JSON" | jq -r '.title // .identifier // ""')
-          
-          # Get rule information
-          RULE_TITLE="${{ steps.extract_rule.outputs.title }}"
-          RULE_IDENTIFIER="${{ steps.extract_rule.outputs.identifier }}"
-          RULE_DESCRIPTION="${{ steps.extract_rule.outputs.description }}"
-          RULE_TEMPLATE="${{ steps.extract_rule.outputs.template }}"
-          
-          # Use rule title if available, otherwise use identifier
-          RULE_DISPLAY_NAME="${RULE_TITLE:-$RULE_IDENTIFIER}"
-          
-          # Generate the template content by replacing placeholders using Python
-          GENERATED_CONTENT=$(echo "$RULE_TEMPLATE" | RULE_NAME="$RULE_DISPLAY_NAME" ENTITY_NAME="$ENTITY_TITLE" DESCRIPTION="$RULE_DESCRIPTION" python3 << 'PYEOF'
+          # Use Python to parse entity JSON and generate template content
+          python3 << 'PYEOF'
+          import json
           import os
           import sys
-          template = sys.stdin.read()
-          rule_name = os.environ.get('RULE_NAME', '')
-          entity_name = os.environ.get('ENTITY_NAME', '')
-          description = os.environ.get('DESCRIPTION', '')
-          result = template.replace('{{ Rule }}', rule_name).replace('{{ s3 }}', entity_name).replace('{{ Description }}', description)
-          print(result, end='')
-          PYEOF
-          )
+          import re
           
-          echo "Generated template content:"
-          echo "$GENERATED_CONTENT"
+          # Get the raw JSON strings from GitHub Actions outputs
+          entity_json_raw = '''${{ steps.get_entity.outputs.entity }}'''
+          rule_title = '''${{ steps.extract_rule.outputs.title }}'''
+          rule_identifier = '''${{ steps.extract_rule.outputs.identifier }}'''
+          rule_description = '''${{ steps.extract_rule.outputs.description }}'''
+          rule_template = '''${{ steps.extract_rule.outputs.template }}'''
+          
+          # Parse entity JSON (same repair logic as rule extraction)
+          def repair_json(json_str):
+              result = []
+              i = 0
+              in_string = False
+              escape_next = False
+              
+              while i < len(json_str):
+                  char = json_str[i]
+                  
+                  if escape_next:
+                      result.append(char)
+                      escape_next = False
+                  elif char == '\\':
+                      result.append(char)
+                      escape_next = True
+                  elif char == '"' and not escape_next:
+                      in_string = not in_string
+                      result.append(char)
+                  elif in_string and char == '\n':
+                      result.append('\\n')
+                  elif in_string and char == '\r':
+                      result.append('\\r')
+                  elif in_string and char == '\t':
+                      result.append('\\t')
+                  else:
+                      result.append(char)
+                  
+                  i += 1
+              
+              return ''.join(result)
+          
+          # Parse entity JSON
+          print("Step: Generate template - Starting entity JSON parsing", file=sys.stderr)
+          print(f"Entity JSON length: {len(entity_json_raw)} characters", file=sys.stderr)
+          print(f"Entity JSON preview (first 200 chars): {entity_json_raw[:200]}", file=sys.stderr)
+          
+          try:
+              print("Attempting initial entity JSON parse...", file=sys.stderr)
+              entity = json.loads(entity_json_raw)
+              print("✓ Initial entity JSON parse succeeded", file=sys.stderr)
+          except json.JSONDecodeError as initial_error:
+              print(f"✗ Initial entity JSON parse failed: {initial_error}", file=sys.stderr)
+              print(f"Error at position: {initial_error.pos if hasattr(initial_error, 'pos') else 'unknown'}", file=sys.stderr)
+              print("Attempting entity JSON repair...", file=sys.stderr)
+              fixed_json = repair_json(entity_json_raw)
+              print(f"Entity JSON repair complete. Fixed JSON preview (first 200 chars): {fixed_json[:200]}", file=sys.stderr)
+              try:
+                  entity = json.loads(fixed_json)
+                  print("✓ Entity JSON parse succeeded after repair", file=sys.stderr)
+              except json.JSONDecodeError as repair_error:
+                  print(f"✗ Entity JSON parse failed after repair: {repair_error}", file=sys.stderr)
+                  print(f"Error at position: {repair_error.pos if hasattr(repair_error, 'pos') else 'unknown'}", file=sys.stderr)
+                  print(f"Error message: {repair_error.msg}", file=sys.stderr)
+                  print(f"Raw entity JSON (first 1000 chars): {entity_json_raw[:1000]}", file=sys.stderr)
+                  print(f"Fixed entity JSON (first 1000 chars): {fixed_json[:1000]}", file=sys.stderr)
+                  sys.exit(1)
+          
+          # Extract entity title
+          entity_title = entity.get('title') or entity.get('identifier', '')
+          print(f"Extracted entity title: {entity_title}", file=sys.stderr)
+          
+          # Use rule title if available, otherwise use identifier
+          rule_display_name = rule_title if rule_title else rule_identifier
+          print(f"Using rule display name: {rule_display_name}", file=sys.stderr)
+          print(f"Rule description length: {len(rule_description)} characters", file=sys.stderr)
+          print(f"Rule template length: {len(rule_template)} characters", file=sys.stderr)
+          
+          # Generate the template content by replacing placeholders
+          result = rule_template.replace('{{ Rule }}', rule_display_name)
+          result = result.replace('{{ s3 }}', entity_title)
+          result = result.replace('{{ Description }}', rule_description)
+          
+          print("Generated template content:")
+          print(result)
+          print(f"Generated content length: {len(result)} characters", file=sys.stderr)
           
           # Set output for use in subsequent steps (using multiline output)
-          {
-            echo "content<<EOF"
-            echo "$GENERATED_CONTENT"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write("content<<EOF\n")
+              f.write(result)
+              f.write("\nEOF\n")
+          
+          sys.exit(0)
+          PYEOF
       
       - name: Create scorecard task entity
         if: steps.extract_rule.outputs.VALIDATION_FAILED == 'false'
@@ -292,16 +380,90 @@ jobs:
           # Get the generated template content
           RESOLUTION_CONTENT="${{ steps.generate_template.outputs.content }}"
           
-          # Generate a title for the task
-          RULE_TITLE="${{ steps.extract_rule.outputs.title }}"
-          RULE_IDENTIFIER="${{ steps.extract_rule.outputs.identifier }}"
-          ENTITY_JSON="${{ steps.get_entity.outputs.entity }}"
-          ENTITY_TITLE=$(echo "$ENTITY_JSON" | jq -r '.title // .identifier // ""')
+          # Generate a title for the task using Python to parse entity JSON
+          eval $(python3 << 'PYEOF'
+          import json
+          import os
+          import sys
+          import re
+          
+          # Get values from GitHub Actions outputs
+          rule_title = '''${{ steps.extract_rule.outputs.title }}'''
+          rule_identifier = '''${{ steps.extract_rule.outputs.identifier }}'''
+          entity_json_raw = '''${{ steps.get_entity.outputs.entity }}'''
+          entity_id_input = '''${{ inputs.entity_id }}'''
+          
+          # Parse entity JSON (same repair logic)
+          def repair_json(json_str):
+              result = []
+              i = 0
+              in_string = False
+              escape_next = False
+              
+              while i < len(json_str):
+                  char = json_str[i]
+                  
+                  if escape_next:
+                      result.append(char)
+                      escape_next = False
+                  elif char == '\\':
+                      result.append(char)
+                      escape_next = True
+                  elif char == '"' and not escape_next:
+                      in_string = not in_string
+                      result.append(char)
+                  elif in_string and char == '\n':
+                      result.append('\\n')
+                  elif in_string and char == '\r':
+                      result.append('\\r')
+                  elif in_string and char == '\t':
+                      result.append('\\t')
+                  else:
+                      result.append(char)
+                  
+                  i += 1
+              
+              return ''.join(result)
+          
+          # Parse entity JSON
+          print("Step: Create task - Starting entity JSON parsing", file=sys.stderr)
+          print(f"Entity JSON length: {len(entity_json_raw)} characters", file=sys.stderr)
+          entity_title = entity_id_input  # Default to input ID
+          
+          if entity_json_raw and entity_json_raw != "null":
+              try:
+                  print("Attempting initial entity JSON parse for task creation...", file=sys.stderr)
+                  entity = json.loads(entity_json_raw)
+                  entity_title = entity.get('title') or entity.get('identifier', entity_id_input)
+                  print(f"✓ Entity JSON parse succeeded. Extracted title: {entity_title}", file=sys.stderr)
+              except json.JSONDecodeError as initial_error:
+                  print(f"✗ Initial entity JSON parse failed: {initial_error}", file=sys.stderr)
+                  print(f"Error at position: {initial_error.pos if hasattr(initial_error, 'pos') else 'unknown'}", file=sys.stderr)
+                  try:
+                      print("Attempting entity JSON repair for task creation...", file=sys.stderr)
+                      fixed_json = repair_json(entity_json_raw)
+                      entity = json.loads(fixed_json)
+                      entity_title = entity.get('title') or entity.get('identifier', entity_id_input)
+                      print(f"✓ Entity JSON parse succeeded after repair. Extracted title: {entity_title}", file=sys.stderr)
+                  except Exception as repair_error:
+                      print(f"✗ Entity JSON parse failed after repair: {repair_error}", file=sys.stderr)
+                      print(f"Falling back to entity_id_input: {entity_id_input}", file=sys.stderr)
+                      entity_title = entity_id_input
+          else:
+              print(f"Entity JSON is empty or null, using entity_id_input: {entity_id_input}", file=sys.stderr)
+          
+          # Use rule title if available, otherwise use identifier
+          rule_display = rule_title if rule_title else rule_identifier
+          task_title = f"Task: {rule_display} - {entity_title}"
+          
+          # Output as shell variable assignments
+          print(f"export TASK_TITLE='{task_title}'")
+          print(f"export ENTITY_TITLE='{entity_title}'")
+          PYEOF
+          )
           
           # Use rule title if available, otherwise use identifier
           RULE_DISPLAY="${RULE_TITLE:-$RULE_IDENTIFIER}"
-          ENTITY_DISPLAY="${ENTITY_TITLE:-${{ inputs.sentity_id }}}"
-          TASK_TITLE="Task: $RULE_DISPLAY - $ENITY_DISPLAY"
           
           # Prepare properties JSON
           PROPERTIES_JSON=$(jq -n \
