@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       entity_id:
-        description: "The service entity identifier that failed the rule"
+        description: "The entity identifier that failed the rule"
         required: true
         type: string
       run_id:
@@ -46,7 +46,7 @@ jobs:
           identifier: ${{ inputs.rule_id }}
       
       - name: Get entity information
-        id: get_service
+        id: get_entity
         uses: port-labs/port-github-action@v1
         with:
           clientId: ${{ secrets.PORT_CLIENT_ID }}
@@ -120,9 +120,9 @@ jobs:
         if: steps.extract_rule.outputs.VALIDATION_FAILED == 'false'
         id: generate_template
         run: |
-          # Get service information
-          ENTITY_JSON="${{ steps.get_service.outputs.entity }}"
-          TITLE=$(echo "$SERVICE_ENTITY_JSON" | jq -r '.title // .identifier // ""')
+          # Get entity information
+          ENTITY_JSON="${{ steps.get_entity.outputs.entity }}"
+          TITLE=$(echo "$ENTITY_JSON" | jq -r '.title // .identifier // ""')
           
           # Get rule information
           RULE_TITLE="${{ steps.extract_rule.outputs.title }}"
@@ -134,14 +134,14 @@ jobs:
           RULE_DISPLAY_NAME="${RULE_TITLE:-$RULE_IDENTIFIER}"
           
           # Generate the template content by replacing placeholders using Python
-          GENERATED_CONTENT=$(echo "$RULE_TEMPLATE" | RULE_NAME="$RULE_DISPLAY_NAME" SERVICE_NAME="$SERVICE_TITLE" DESCRIPTION="$RULE_DESCRIPTION" python3 << 'PYEOF'
+          GENERATED_CONTENT=$(echo "$RULE_TEMPLATE" | RULE_NAME="$RULE_DISPLAY_NAME" ENTITY_NAME="$ENTITY_TITLE" DESCRIPTION="$RULE_DESCRIPTION" python3 << 'PYEOF'
           import os
           import sys
           template = sys.stdin.read()
           rule_name = os.environ.get('RULE_NAME', '')
-          service_name = os.environ.get('SERVICE_NAME', '')
+          entity_name = os.environ.get('ENTITY_NAME', '')
           description = os.environ.get('DESCRIPTION', '')
-          result = template.replace('{{ Rule }}', rule_name).replace('{{ Service }}', service_name).replace('{{ Description }}', description)
+          result = template.replace('{{ Rule }}', rule_name).replace('{{ Entity }}', entity_name).replace('{{ Description }}', description)
           print(result, end='')
           PYEOF
           )
@@ -177,13 +177,13 @@ jobs:
           # Generate a title for the task
           RULE_TITLE="${{ steps.extract_rule.outputs.title }}"
           RULE_IDENTIFIER="${{ steps.extract_rule.outputs.identifier }}"
-          SERVICE_ENTITY_JSON="${{ steps.get_service.outputs.entity }}"
-          SERVICE_TITLE=$(echo "$SERVICE_ENTITY_JSON" | jq -r '.title // .identifier // ""')
+          ENTITY_JSON="${{ steps.get_entity.outputs.entity }}"
+          ENTITY_TITLE=$(echo "$ENTITY_JSON" | jq -r '.title // .identifier // ""')
           
           # Use rule title if available, otherwise use identifier
           RULE_DISPLAY="${RULE_TITLE:-$RULE_IDENTIFIER}"
-          SERVICE_DISPLAY="${SERVICE_TITLE:-${{ inputs.service_id }}}"
-          TASK_TITLE="Task: $RULE_DISPLAY - $SERVICE_DISPLAY"
+          ENTITY_DISPLAY="${ENTITY_TITLE:-${{ inputs.sentity_id }}}"
+          TASK_TITLE="Task: $RULE_DISPLAY - $ENITY_DISPLAY"
           
           # Prepare properties JSON
           PROPERTIES_JSON=$(jq -n \
@@ -193,17 +193,17 @@ jobs:
           # Prepare relations JSON - build object conditionally
           RELATIONS_JSON=$(jq -n \
             --arg rule_id "${{ inputs.rule_id }}" \
-            --arg service_id "${{ inputs.service_id }}" \
+            --arg entity_id "${{ inputs.entity_id }}" \
             --arg team_id "$TEAM_IDENTIFIER" \
             '{
               rule: $rule_id,
-              service: $service_id
+              s_3: $entity_id
             } + (if $team_id != "" and $team_id != "null" then {team: $team_id} else {} end)')
           
           echo "Creating scorecard task entity:"
           echo "  Title: $TASK_TITLE"
           echo "  Rule: ${{ inputs.rule_id }}"
-          echo "  Service: ${{ inputs.service_id }}"
+          echo "  Entity: ${{ inputs.entity_id }}"
           echo "  Team: $TEAM_IDENTIFIER"
           echo "  Properties: $PROPERTIES_JSON"
           echo "  Relations: $RELATIONS_JSON"
