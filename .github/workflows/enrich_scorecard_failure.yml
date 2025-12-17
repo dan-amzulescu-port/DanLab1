@@ -59,26 +59,96 @@ jobs:
       - name: Extract rule properties and validate
         id: extract_rule
         run: |
-          # The Port GitHub Action outputs the entity as a JSON string
-          # Use Python to safely parse the JSON and extract values
+          # The Port GitHub Action outputs the entity as a JSON string with potential newlines
+          # Use Python to repair and parse the JSON
           python3 << 'PYEOF'
           import json
           import os
           import sys
+          import re
           
-          # Get the entity JSON from GitHub Actions output
-          entity_json_str = '''${{ steps.get_rule.outputs.entity }}'''
+          # Get the raw JSON string from GitHub Actions output
+          entity_json_raw = '''${{ steps.get_rule.outputs.entity }}'''
           
-          if not entity_json_str or entity_json_str == "null":
+          if not entity_json_raw or entity_json_raw.strip() == "null":
               print("Error: Rule entity not found or empty", file=sys.stderr)
               sys.exit(1)
           
+          # Repair JSON by escaping newlines and other control characters in string values
+          # This regex finds string values (including nested ones) and escapes control chars
+          def escape_control_chars(match):
+              # Get the full match including quotes
+              full_match = match.group(0)
+              # Get the content between quotes
+              content = match.group(1)
+              # Escape control characters
+              content = (content
+                        .replace('\\', '\\\\')  # Escape backslashes first
+                        .replace('\n', '\\n')
+                        .replace('\r', '\\r')
+                        .replace('\t', '\\t')
+                        .replace('\b', '\\b')
+                        .replace('\f', '\\f'))
+              return f'"{content}"'
+          
+          # Pattern to match string values: "..." but not already escaped ones
+          # This is tricky - we need to match strings but handle escaped quotes
+          # Simple approach: replace newlines in the raw string before JSON parsing
+          # But we need to be careful not to break the JSON structure
+          
+          # Better approach: use a state machine or use json.JSONDecoder with custom handling
+          # For now, let's try a simpler fix: replace literal newlines that are inside string values
+          # We'll use a more targeted approach
+          
           try:
-              entity = json.loads(entity_json_str)
-          except json.JSONDecodeError as e:
-              print(f"Error: Invalid JSON from rule entity: {e}", file=sys.stderr)
-              print(f"JSON string: {entity_json_str}", file=sys.stderr)
-              sys.exit(1)
+              # First, try to parse as-is
+              entity = json.loads(entity_json_raw)
+          except json.JSONDecodeError:
+              # If that fails, try to fix newlines in string values
+              # Find all string values and escape newlines in them
+              fixed_json = entity_json_raw
+              
+              # Replace newlines that appear between quotes (string values)
+              # This is a simplified approach - find patterns like "text\nmore text"
+              # We'll use a regex that matches quoted strings and escapes newlines within them
+              
+              # More robust: iterate through and fix string values
+              result = []
+              i = 0
+              in_string = False
+              escape_next = False
+              
+              while i < len(entity_json_raw):
+                  char = entity_json_raw[i]
+                  
+                  if escape_next:
+                      result.append(char)
+                      escape_next = False
+                  elif char == '\\':
+                      result.append(char)
+                      escape_next = True
+                  elif char == '"' and not escape_next:
+                      in_string = not in_string
+                      result.append(char)
+                  elif in_string and char == '\n':
+                      result.append('\\n')
+                  elif in_string and char == '\r':
+                      result.append('\\r')
+                  elif in_string and char == '\t':
+                      result.append('\\t')
+                  else:
+                      result.append(char)
+                  
+                  i += 1
+              
+              fixed_json = ''.join(result)
+              
+              try:
+                  entity = json.loads(fixed_json)
+              except json.JSONDecodeError as e:
+                  print(f"Error: Invalid JSON from rule entity: {e}", file=sys.stderr)
+                  print(f"JSON string (first 500 chars): {entity_json_raw[:500]}", file=sys.stderr)
+                  sys.exit(1)
           
           # Extract properties
           properties = entity.get('properties', {})
@@ -105,8 +175,17 @@ jobs:
               if validation_failed:
                   f.write(f"ERROR_MESSAGE={error_message}\n")
               else:
-                  f.write(f"description={rule_description}\n")
-                  f.write(f"template={rule_template}\n")
+                  # Use multiline format for values that might contain newlines
+                  if '\n' in rule_description:
+                      f.write(f"description<<EOF\n{rule_description}\nEOF\n")
+                  else:
+                      f.write(f"description={rule_description}\n")
+                  
+                  if '\n' in rule_template:
+                      f.write(f"template<<EOF\n{rule_template}\nEOF\n")
+                  else:
+                      f.write(f"template={rule_template}\n")
+                  
                   f.write(f"team={rule_team}\n")
                   f.write(f"title={rule_title}\n")
                   f.write(f"identifier={rule_identifier}\n")
@@ -116,7 +195,7 @@ jobs:
               print(f"Rule Template: {rule_template}")
               print(f"Rule Team: {rule_team}")
           
-          sys.exit(0)  # Exit 0 to allow next step to handle validation
+          sys.exit(0)
           PYEOF
       
       - name: Log validation error and exit
