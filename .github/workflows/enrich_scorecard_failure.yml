@@ -1,3 +1,5 @@
+name: Handle degraded rule result
+
 on:
   workflow_dispatch:
     inputs:
@@ -43,14 +45,25 @@ jobs:
           blueprint: "_rule"
           identifier: ${{ inputs.rule_id }}
       
-      - name: Extract rule properties
+      - name: Get service entity information
+        id: get_service
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.us.getport.io
+          operation: GET
+          blueprint: service
+          identifier: ${{ inputs.service_id }}
+      
+      - name: Extract rule properties and validate
         id: extract_rule
         run: |
           # The Port GitHub Action outputs the entity as a JSON string
           RULE_ENTITY_JSON="${{ steps.get_rule.outputs.entity }}"
           
           if [ -z "$RULE_ENTITY_JSON" ] || [ "$RULE_ENTITY_JSON" == "null" ]; then
-            echo "Error: Entity not found or empty"
+            echo "Error: Rule entity not found or empty"
             exit 1
           fi
           
@@ -58,7 +71,23 @@ jobs:
           RULE_DESCRIPTION=$(echo "$RULE_ENTITY_JSON" | jq -r '.properties.description // ""')
           RULE_TEMPLATE=$(echo "$RULE_ENTITY_JSON" | jq -r '.properties.template // ""')
           RULE_TEAM=$(echo "$RULE_ENTITY_JSON" | jq -r '.team // ""')
+          RULE_TITLE=$(echo "$RULE_ENTITY_JSON" | jq -r '.title // .identifier // ""')
+          RULE_IDENTIFIER=$(echo "$RULE_ENTITY_JSON" | jq -r '.identifier // ""')
           
+          # Validate that description and template are not null/empty
+          if [ -z "$RULE_DESCRIPTION" ] || [ "$RULE_DESCRIPTION" == "null" ]; then
+            echo "VALIDATION_FAILED=true" >> $GITHUB_OUTPUT
+            echo "ERROR_MESSAGE=Rule description is missing or null for rule: $RULE_IDENTIFIER" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          if [ -z "$RULE_TEMPLATE" ] || [ "$RULE_TEMPLATE" == "null" ]; then
+            echo "VALIDATION_FAILED=true" >> $GITHUB_OUTPUT
+            echo "ERROR_MESSAGE=Rule template is missing or null for rule: $RULE_IDENTIFIER" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "VALIDATION_FAILED=false" >> $GITHUB_OUTPUT
           echo "Rule Description: $RULE_DESCRIPTION"
           echo "Rule Template: $RULE_TEMPLATE"
           echo "Rule Team: $RULE_TEAM"
@@ -67,3 +96,145 @@ jobs:
           echo "description=$RULE_DESCRIPTION" >> $GITHUB_OUTPUT
           echo "template=$RULE_TEMPLATE" >> $GITHUB_OUTPUT
           echo "team=$RULE_TEAM" >> $GITHUB_OUTPUT
+          echo "title=$RULE_TITLE" >> $GITHUB_OUTPUT
+          echo "identifier=$RULE_IDENTIFIER" >> $GITHUB_OUTPUT
+      
+      - name: Log validation error and exit
+        if: steps.extract_rule.outputs.VALIDATION_FAILED == 'true'
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.us.getport.io
+          operation: PATCH_RUN
+          runId: ${{ inputs.run_id }}
+          logMessage: ${{ steps.extract_rule.outputs.ERROR_MESSAGE }}
+      
+      - name: Fail if validation failed
+        if: steps.extract_rule.outputs.VALIDATION_FAILED == 'true'
+        run: |
+          echo "Validation failed. Exiting workflow."
+          exit 1
+      
+      - name: Generate template content
+        if: steps.extract_rule.outputs.VALIDATION_FAILED == 'false'
+        id: generate_template
+        run: |
+          # Get service information
+          SERVICE_ENTITY_JSON="${{ steps.get_service.outputs.entity }}"
+          SERVICE_TITLE=$(echo "$SERVICE_ENTITY_JSON" | jq -r '.title // .identifier // ""')
+          
+          # Get rule information
+          RULE_TITLE="${{ steps.extract_rule.outputs.title }}"
+          RULE_IDENTIFIER="${{ steps.extract_rule.outputs.identifier }}"
+          RULE_DESCRIPTION="${{ steps.extract_rule.outputs.description }}"
+          RULE_TEMPLATE="${{ steps.extract_rule.outputs.template }}"
+          
+          # Use rule title if available, otherwise use identifier
+          RULE_DISPLAY_NAME="${RULE_TITLE:-$RULE_IDENTIFIER}"
+          
+          # Generate the template content by replacing placeholders using Python
+          GENERATED_CONTENT=$(echo "$RULE_TEMPLATE" | RULE_NAME="$RULE_DISPLAY_NAME" SERVICE_NAME="$SERVICE_TITLE" DESCRIPTION="$RULE_DESCRIPTION" python3 << 'PYEOF'
+          import os
+          import sys
+          template = sys.stdin.read()
+          rule_name = os.environ.get('RULE_NAME', '')
+          service_name = os.environ.get('SERVICE_NAME', '')
+          description = os.environ.get('DESCRIPTION', '')
+          result = template.replace('{{ Rule }}', rule_name).replace('{{ Service }}', service_name).replace('{{ Description }}', description)
+          print(result, end='')
+          PYEOF
+          )
+          
+          echo "Generated template content:"
+          echo "$GENERATED_CONTENT"
+          
+          # Set output for use in subsequent steps (using multiline output)
+          {
+            echo "content<<EOF"
+            echo "$GENERATED_CONTENT"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+      
+      - name: Create scorecard task entity
+        if: steps.extract_rule.outputs.VALIDATION_FAILED == 'false'
+        id: create_task
+        run: |
+          # Get the team identifier from the rule entity (team can be an array or single value)
+          RULE_ENTITY_JSON="${{ steps.get_rule.outputs.entity }}"
+          TEAM_VALUE=$(echo "$RULE_ENTITY_JSON" | jq -r '.team // ""')
+          
+          # Extract first team identifier if it's an array, otherwise use the value
+          if [ -n "$TEAM_VALUE" ] && [ "$TEAM_VALUE" != "null" ]; then
+            TEAM_IDENTIFIER=$(echo "$TEAM_VALUE" | jq -r 'if type == "array" then .[0] else . end // ""')
+          else
+            TEAM_IDENTIFIER=""
+          fi
+          
+          # Get the generated template content
+          RESOLUTION_CONTENT="${{ steps.generate_template.outputs.content }}"
+          
+          # Generate a title for the task
+          RULE_TITLE="${{ steps.extract_rule.outputs.title }}"
+          RULE_IDENTIFIER="${{ steps.extract_rule.outputs.identifier }}"
+          SERVICE_ENTITY_JSON="${{ steps.get_service.outputs.entity }}"
+          SERVICE_TITLE=$(echo "$SERVICE_ENTITY_JSON" | jq -r '.title // .identifier // ""')
+          
+          # Use rule title if available, otherwise use identifier
+          RULE_DISPLAY="${RULE_TITLE:-$RULE_IDENTIFIER}"
+          SERVICE_DISPLAY="${SERVICE_TITLE:-${{ inputs.service_id }}}"
+          TASK_TITLE="Task: $RULE_DISPLAY - $SERVICE_DISPLAY"
+          
+          # Prepare properties JSON
+          PROPERTIES_JSON=$(jq -n \
+            --arg resolution "$RESOLUTION_CONTENT" \
+            '{resolution: $resolution}')
+          
+          # Prepare relations JSON - build object conditionally
+          RELATIONS_JSON=$(jq -n \
+            --arg rule_id "${{ inputs.rule_id }}" \
+            --arg service_id "${{ inputs.service_id }}" \
+            --arg team_id "$TEAM_IDENTIFIER" \
+            '{
+              rule: $rule_id,
+              service: $service_id
+            } + (if $team_id != "" and $team_id != "null" then {team: $team_id} else {} end)')
+          
+          echo "Creating scorecard task entity:"
+          echo "  Title: $TASK_TITLE"
+          echo "  Rule: ${{ inputs.rule_id }}"
+          echo "  Service: ${{ inputs.service_id }}"
+          echo "  Team: $TEAM_IDENTIFIER"
+          echo "  Properties: $PROPERTIES_JSON"
+          echo "  Relations: $RELATIONS_JSON"
+          
+          # Set outputs
+          echo "task_title=$TASK_TITLE" >> $GITHUB_OUTPUT
+          echo "properties=$PROPERTIES_JSON" >> $GITHUB_OUTPUT
+          echo "relations=$RELATIONS_JSON" >> $GITHUB_OUTPUT
+      
+      - name: Upsert scorecard task entity
+        if: steps.extract_rule.outputs.VALIDATION_FAILED == 'false'
+        id: upsert_task
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.us.getport.io
+          operation: UPSERT
+          blueprint: scorecard_tasks
+          title: ${{ steps.create_task.outputs.task_title }}
+          properties: ${{ steps.create_task.outputs.properties }}
+          relations: ${{ steps.create_task.outputs.relations }}
+          runId: ${{ inputs.run_id }}
+      
+      - name: Log task creation success
+        if: steps.extract_rule.outputs.VALIDATION_FAILED == 'false'
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.us.getport.io
+          operation: PATCH_RUN
+          runId: ${{ inputs.run_id }}
+          logMessage: "Successfully created scorecard task: ${{ steps.create_task.outputs.task_title }}"
