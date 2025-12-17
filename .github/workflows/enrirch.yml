@@ -1,0 +1,138 @@
+name: Handle degraded rule result
+
+on:
+  workflow_dispatch:
+    inputs:
+      rule_result_id:
+        description: "The rule result entity identifier"
+        required: true
+        type: string
+      rule_id:
+        description: "The rule entity identifier"
+        required: true
+        type: string
+      entity_id:
+        description: "The entity identifier that failed the rule"
+        required: true
+        type: string
+      run_id:
+        description: "Port action run ID"
+        required: true
+        type: string
+
+jobs:
+  print_inputs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Log message to Port run
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.us.getport.io
+          operation: PATCH_RUN
+          runId: ${{ inputs.run_id }}
+          logMessage: "Starting scorecard failure handling for rule result: ${{ inputs.rule_result_id }}"
+      
+      - name: Get rule entity information
+        id: get_rule
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.us.getport.io
+          operation: GET
+          blueprint: "_rule"
+          identifier: ${{ inputs.rule_id }}
+      
+      - name: Get entity information
+        id: get_entity
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.us.getport.io
+          operation: GET
+          blueprint: s3
+          identifier: ${{ inputs.entity_id }}
+      
+      - name: Extract rule properties and validate
+        id: extract_rule
+        env:
+          RULE_ENTITY_JSON: ${{ steps.get_rule.outputs.entity }}
+        run: |
+          python3 scorecard_failure_usecase/extract_rule.py
+      
+      - name: Log validation error and exit
+        if: steps.extract_rule.outputs.VALIDATION_FAILED == 'true'
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.us.getport.io
+          operation: PATCH_RUN
+          runId: ${{ inputs.run_id }}
+          logMessage: ${{ steps.extract_rule.outputs.ERROR_MESSAGE }}
+      
+      - name: Fail if validation failed
+        if: steps.extract_rule.outputs.VALIDATION_FAILED == 'true'
+        run: |
+          echo "Validation failed. Exiting workflow."
+          exit 1
+      
+      - name: Generate template content
+        if: steps.extract_rule.outputs.VALIDATION_FAILED == 'false'
+        id: generate_template
+        env:
+          ENTITY_JSON: ${{ steps.get_entity.outputs.entity }}
+          RULE_TITLE: ${{ steps.extract_rule.outputs.title }}
+          RULE_IDENTIFIER: ${{ steps.extract_rule.outputs.identifier }}
+          RULE_DESCRIPTION: ${{ steps.extract_rule.outputs.description }}
+          RULE_TEMPLATE: ${{ steps.extract_rule.outputs.template }}
+          ENTITY_ID: ${{ inputs.entity_id }}
+        run: |
+          python3 scorecard_failure_usecase/generate_template.py
+      
+      - name: Create scorecard task entity
+        if: steps.extract_rule.outputs.VALIDATION_FAILED == 'false'
+        id: create_task
+        env:
+          TEAM_VALUE: ${{ steps.extract_rule.outputs.team }}
+          RESOLUTION_CONTENT: ${{ steps.generate_template.outputs.content }}
+          RULE_TITLE: ${{ steps.extract_rule.outputs.title }}
+          RULE_IDENTIFIER: ${{ steps.extract_rule.outputs.identifier }}
+          ENTITY_JSON: ${{ steps.get_entity.outputs.entity }}
+          ENTITY_ID: ${{ inputs.entity_id }}
+          RULE_ID: ${{ inputs.rule_id }}
+        run: |
+          python3 scorecard_failure_usecase/create_task.py
+      
+      - name: Upsert scorecard task entity
+        if: steps.extract_rule.outputs.VALIDATION_FAILED == 'false'
+        id: upsert_task
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.us.getport.io
+          operation: UPSERT
+          blueprint: scorecard_tasks
+          title: ${{ steps.create_task.outputs.task_title }}
+          properties: ${{ steps.create_task.outputs.properties }}
+          relations: ${{ steps.create_task.outputs.relations }}
+          runId: ${{ inputs.run_id }}
+      
+      - name: Log task creation success
+        if: steps.extract_rule.outputs.VALIDATION_FAILED == 'false'
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.us.getport.io
+          operation: PATCH_RUN
+          runId: ${{ inputs.run_id }}
+          logMessage: "Successfully created scorecard task: ${{ steps.create_task.outputs.task_title }}"
+
