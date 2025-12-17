@@ -11,7 +11,7 @@ on:
         description: "The rule entity identifier"
         required: true
         type: string
-      service_id:
+      entity_id:
         description: "The service entity identifier that failed the rule"
         required: true
         type: string
@@ -45,7 +45,7 @@ jobs:
           blueprint: "_rule"
           identifier: ${{ inputs.rule_id }}
       
-      - name: Get service entity information
+      - name: Get entity information
         id: get_service
         uses: port-labs/port-github-action@v1
         with:
@@ -53,8 +53,8 @@ jobs:
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
           baseUrl: https://api.us.getport.io
           operation: GET
-          blueprint: service
-          identifier: ${{ inputs.service_id }}
+          blueprint: s_3
+          identifier: ${{ inputs.entity_id }}
       
       - name: Extract rule properties and validate
         id: extract_rule
@@ -121,8 +121,8 @@ jobs:
         id: generate_template
         run: |
           # Get service information
-          SERVICE_ENTITY_JSON="${{ steps.get_service.outputs.entity }}"
-          SERVICE_TITLE=$(echo "$SERVICE_ENTITY_JSON" | jq -r '.title // .identifier // ""')
+          ENTITY_JSON="${{ steps.get_service.outputs.entity }}"
+          TITLE=$(echo "$SERVICE_ENTITY_JSON" | jq -r '.title // .identifier // ""')
           
           # Get rule information
           RULE_TITLE="${{ steps.extract_rule.outputs.title }}"
