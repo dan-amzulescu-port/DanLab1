@@ -15,6 +15,10 @@ on:
         description: "The service entity identifier that failed the rule"
         required: true
         type: string
+      run_id:
+        description: "Port action run ID"
+        required: true
+        type: string
 
 jobs:
   print_inputs:
