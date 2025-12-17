@@ -53,7 +53,7 @@ jobs:
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
           baseUrl: https://api.us.getport.io
           operation: GET
-          blueprint: s_3
+          blueprint: s3
           identifier: ${{ inputs.entity_id }}
       
       - name: Extract rule properties and validate
