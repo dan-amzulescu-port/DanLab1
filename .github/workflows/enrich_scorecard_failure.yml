@@ -1,5 +1,3 @@
-name: Handle degraded rule result
-
 on:
   workflow_dispatch:
     inputs:
@@ -33,3 +31,39 @@ jobs:
           operation: PATCH_RUN
           runId: ${{ inputs.run_id }}
           logMessage: "Starting scorecard failure handling for rule result: ${{ inputs.rule_result_id }}"
+      
+      - name: Get rule entity information
+        id: get_rule
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.us.getport.io
+          operation: GET
+          blueprint: "_rule"
+          identifier: ${{ inputs.rule_id }}
+      
+      - name: Extract rule properties
+        id: extract_rule
+        run: |
+          # The Port GitHub Action outputs the entity as a JSON string
+          RULE_ENTITY_JSON="${{ steps.get_rule.outputs.entity }}"
+          
+          if [ -z "$RULE_ENTITY_JSON" ] || [ "$RULE_ENTITY_JSON" == "null" ]; then
+            echo "Error: Entity not found or empty"
+            exit 1
+          fi
+          
+          # Extract rule properties using jq
+          RULE_DESCRIPTION=$(echo "$RULE_ENTITY_JSON" | jq -r '.properties.description // ""')
+          RULE_TEMPLATE=$(echo "$RULE_ENTITY_JSON" | jq -r '.properties.template // ""')
+          RULE_TEAM=$(echo "$RULE_ENTITY_JSON" | jq -r '.team // ""')
+          
+          echo "Rule Description: $RULE_DESCRIPTION"
+          echo "Rule Template: $RULE_TEMPLATE"
+          echo "Rule Team: $RULE_TEAM"
+          
+          # Set outputs for use in subsequent steps
+          echo "description=$RULE_DESCRIPTION" >> $GITHUB_OUTPUT
+          echo "template=$RULE_TEMPLATE" >> $GITHUB_OUTPUT
+          echo "team=$RULE_TEAM" >> $GITHUB_OUTPUT
