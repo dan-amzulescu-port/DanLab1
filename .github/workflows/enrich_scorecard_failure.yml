@@ -488,10 +488,22 @@ jobs:
           echo "  Properties: $PROPERTIES_JSON"
           echo "  Relations: $RELATIONS_JSON"
           
-          # Set outputs
+          # Set outputs using multiline format for JSON that may contain newlines
           echo "task_title=$TASK_TITLE" >> $GITHUB_OUTPUT
-          echo "properties=$PROPERTIES_JSON" >> $GITHUB_OUTPUT
-          echo "relations=$RELATIONS_JSON" >> $GITHUB_OUTPUT
+          
+          # Use multiline format for properties JSON (it contains newlines in the resolution field)
+          {
+            echo "properties<<EOF"
+            echo "$PROPERTIES_JSON"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+          
+          # Use multiline format for relations JSON as well (to be safe)
+          {
+            echo "relations<<EOF"
+            echo "$RELATIONS_JSON"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
       
       - name: Upsert scorecard task entity
         if: steps.extract_rule.outputs.VALIDATION_FAILED == 'false'
