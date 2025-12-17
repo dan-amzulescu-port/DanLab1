@@ -60,44 +60,64 @@ jobs:
         id: extract_rule
         run: |
           # The Port GitHub Action outputs the entity as a JSON string
-          RULE_ENTITY_JSON="${{ steps.get_rule.outputs.entity }}"
+          # Use Python to safely parse the JSON and extract values
+          python3 << 'PYEOF'
+          import json
+          import os
+          import sys
           
-          if [ -z "$RULE_ENTITY_JSON" ] || [ "$RULE_ENTITY_JSON" == "null" ]; then
-            echo "Error: Rule entity not found or empty"
-            exit 1
-          fi
+          # Get the entity JSON from GitHub Actions output
+          entity_json_str = '''${{ steps.get_rule.outputs.entity }}'''
           
-          # Extract rule properties using jq
-          RULE_DESCRIPTION=$(echo "$RULE_ENTITY_JSON" | jq -r '.properties.description // ""')
-          RULE_TEMPLATE=$(echo "$RULE_ENTITY_JSON" | jq -r '.properties.template // ""')
-          RULE_TEAM=$(echo "$RULE_ENTITY_JSON" | jq -r '.team // ""')
-          RULE_TITLE=$(echo "$RULE_ENTITY_JSON" | jq -r '.title // .identifier // ""')
-          RULE_IDENTIFIER=$(echo "$RULE_ENTITY_JSON" | jq -r '.identifier // ""')
+          if not entity_json_str or entity_json_str == "null":
+              print("Error: Rule entity not found or empty", file=sys.stderr)
+              sys.exit(1)
+          
+          try:
+              entity = json.loads(entity_json_str)
+          except json.JSONDecodeError as e:
+              print(f"Error: Invalid JSON from rule entity: {e}", file=sys.stderr)
+              print(f"JSON string: {entity_json_str}", file=sys.stderr)
+              sys.exit(1)
+          
+          # Extract properties
+          properties = entity.get('properties', {})
+          rule_description = properties.get('description', '')
+          rule_template = properties.get('template', '')
+          rule_team = entity.get('team', '')
+          rule_title = entity.get('title') or entity.get('identifier', '')
+          rule_identifier = entity.get('identifier', '')
           
           # Validate that description and template are not null/empty
-          if [ -z "$RULE_DESCRIPTION" ] || [ "$RULE_DESCRIPTION" == "null" ]; then
-            echo "VALIDATION_FAILED=true" >> $GITHUB_OUTPUT
-            echo "ERROR_MESSAGE=Rule description is missing or null for rule: $RULE_IDENTIFIER" >> $GITHUB_OUTPUT
-            exit 0
-          fi
+          validation_failed = False
+          error_message = ""
           
-          if [ -z "$RULE_TEMPLATE" ] || [ "$RULE_TEMPLATE" == "null" ]; then
-            echo "VALIDATION_FAILED=true" >> $GITHUB_OUTPUT
-            echo "ERROR_MESSAGE=Rule template is missing or null for rule: $RULE_IDENTIFIER" >> $GITHUB_OUTPUT
-            exit 0
-          fi
+          if not rule_description or rule_description == "null":
+              validation_failed = True
+              error_message = f"Rule description is missing or null for rule: {rule_identifier}"
+          elif not rule_template or rule_template == "null":
+              validation_failed = True
+              error_message = f"Rule template is missing or null for rule: {rule_identifier}"
           
-          echo "VALIDATION_FAILED=false" >> $GITHUB_OUTPUT
-          echo "Rule Description: $RULE_DESCRIPTION"
-          echo "Rule Template: $RULE_TEMPLATE"
-          echo "Rule Team: $RULE_TEAM"
+          # Set GitHub Actions outputs
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"VALIDATION_FAILED={str(validation_failed).lower()}\n")
+              if validation_failed:
+                  f.write(f"ERROR_MESSAGE={error_message}\n")
+              else:
+                  f.write(f"description={rule_description}\n")
+                  f.write(f"template={rule_template}\n")
+                  f.write(f"team={rule_team}\n")
+                  f.write(f"title={rule_title}\n")
+                  f.write(f"identifier={rule_identifier}\n")
           
-          # Set outputs for use in subsequent steps
-          echo "description=$RULE_DESCRIPTION" >> $GITHUB_OUTPUT
-          echo "template=$RULE_TEMPLATE" >> $GITHUB_OUTPUT
-          echo "team=$RULE_TEAM" >> $GITHUB_OUTPUT
-          echo "title=$RULE_TITLE" >> $GITHUB_OUTPUT
-          echo "identifier=$RULE_IDENTIFIER" >> $GITHUB_OUTPUT
+          if not validation_failed:
+              print(f"Rule Description: {rule_description}")
+              print(f"Rule Template: {rule_template}")
+              print(f"Rule Team: {rule_team}")
+          
+          sys.exit(0)  # Exit 0 to allow next step to handle validation
+          PYEOF
       
       - name: Log validation error and exit
         if: steps.extract_rule.outputs.VALIDATION_FAILED == 'true'
@@ -160,16 +180,35 @@ jobs:
         if: steps.extract_rule.outputs.VALIDATION_FAILED == 'false'
         id: create_task
         run: |
-          # Get the team identifier from the rule entity (team can be an array or single value)
-          RULE_ENTITY_JSON="${{ steps.get_rule.outputs.entity }}"
-          TEAM_VALUE=$(echo "$RULE_ENTITY_JSON" | jq -r '.team // ""')
+          # Get the team identifier from the extracted rule outputs
+          # The team value might be an array, so we need to extract the first one if it's an array
+          TEAM_VALUE="${{ steps.extract_rule.outputs.team }}"
           
           # Extract first team identifier if it's an array, otherwise use the value
-          if [ -n "$TEAM_VALUE" ] && [ "$TEAM_VALUE" != "null" ]; then
-            TEAM_IDENTIFIER=$(echo "$TEAM_VALUE" | jq -r 'if type == "array" then .[0] else . end // ""')
-          else
-            TEAM_IDENTIFIER=""
-          fi
+          # Use Python to safely parse if it's JSON array or string
+          TEAM_IDENTIFIER=$(python3 << 'PYEOF'
+          import json
+          import os
+          import sys
+          team_value = os.environ.get('TEAM_VALUE', '')
+          if not team_value or team_value == "null":
+              print("")
+              sys.exit(0)
+          try:
+              # Try to parse as JSON (in case it's an array)
+              parsed = json.loads(team_value)
+              if isinstance(parsed, list) and len(parsed) > 0:
+                  print(parsed[0])
+              elif parsed:
+                  print(parsed)
+              else:
+                  print("")
+          except (json.JSONDecodeError, TypeError):
+              # If not JSON, use as string
+              print(team_value if team_value else "")
+          PYEOF
+          TEAM_VALUE="$TEAM_VALUE"
+          )
           
           # Get the generated template content
           RESOLUTION_CONTENT="${{ steps.generate_template.outputs.content }}"
