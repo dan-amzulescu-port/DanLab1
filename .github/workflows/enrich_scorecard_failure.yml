@@ -20,8 +20,12 @@ jobs:
   print_inputs:
     runs-on: ubuntu-latest
     steps:
-      - name: Print automation inputs
-        run: |
-          echo "Rule Result ID: ${{ inputs.rule_result_id }}"
-          echo "Rule ID:        ${{ inputs.rule_id }}"
-          echo "Service ID:     ${{ inputs.service_id }}"
+      - name: Log message to Port run
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          operation: PATCH_RUN
+          runId: ${{ inputs.run_id }}
+          logMessage: "Starting scorecard failure handling for rule result: ${{ inputs.rule_result_id }}"
