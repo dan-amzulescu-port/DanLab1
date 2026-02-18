@@ -1,0 +1,59 @@
+# Mock: Provision Short-Lived EC2 for Application Testing. Logs progress with emojis to Port.
+name: "[Mock] Provision EC2 Test Instance"
+
+on:
+  workflow_dispatch:
+    inputs:
+      port_context:
+        description: Port run context (runId, etc.) for logging
+        required: true
+        type: string
+      instance_name:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+      instance_type:
+        required: true
+        type: string
+      ttl_hours:
+        required: true
+        type: string
+      region:
+        required: false
+        type: string
+        default: "us-east-1"
+
+jobs:
+  mock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mock provision and report to Port
+        env:
+          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+          PORT_BASE_URL: https://api.us.getport.io
+          PORT_CONTEXT_JSON: ${{ inputs.port_context }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          PORT_RUN_ID=$(echo "$PORT_CONTEXT_JSON" | jq -r '.runId // empty')
+          if [[ -z "$PORT_RUN_ID" ]]; then echo "::warning::No runId in port_context"; exit 0; fi
+          if [[ -z "${PORT_CLIENT_ID:-}" || -z "${PORT_CLIENT_SECRET:-}" ]]; then
+            echo "::warning::PORT_CLIENT_ID/SECRET not set"; exit 0
+          fi
+          token=$(curl -sS -X POST "$PORT_BASE_URL/v1/auth/access_token" \
+            -H "Content-Type: application/json" \
+            -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" | jq -r '.accessToken')
+          port_log() { curl -sS -X POST "$PORT_BASE_URL/v1/actions/runs/$PORT_RUN_ID/logs" \
+            -H "Content-Type: application/json" -H "Authorization: Bearer $token" \
+            -d "$(jq -nc --arg msg "$1" '{message: $msg}')" >/dev/null || true; }
+          port_patch() { curl -sS -X PATCH "$PORT_BASE_URL/v1/actions/runs/$PORT_RUN_ID" \
+            -H "Content-Type: application/json" -H "Authorization: Bearer $token" -d "$1" >/dev/null || true; }
+          port_log "🚀 Mock: Starting EC2 test instance provisioning..."
+          port_log "📋 Instance: ${{ inputs.instance_name }} | Env: ${{ inputs.environment }} | Type: ${{ inputs.instance_type }} | TTL: ${{ inputs.ttl_hours }}h"
+          port_log "⏳ Mock: Validating inputs..."
+          port_log "☁️ Mock: Calling AWS API (simulated)..."
+          port_log "✅ Mock: EC2 instance provisioned successfully (demo only)."
+          port_patch "$(jq -nc --arg url "$RUN_URL" '{link: [$url], status: "SUCCESS"}')"

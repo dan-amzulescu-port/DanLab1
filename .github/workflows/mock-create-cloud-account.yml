@@ -1,0 +1,54 @@
+# Mock: Create New AWS or GCP Account in Org Structure. Logs progress with emojis to Port.
+name: "[Mock] Create Cloud Account"
+
+on:
+  workflow_dispatch:
+    inputs:
+      port_context:
+        description: Port run context (runId, etc.) for logging
+        required: true
+        type: string
+      account_name:
+        required: true
+        type: string
+      cloud_provider:
+        required: true
+        type: string
+      parent_ou_id:
+        required: true
+        type: string
+      owner_email:
+        required: true
+        type: string
+      billing_account_id:
+        required: false
+        type: string
+      cost_center:
+        required: false
+        type: string
+
+jobs:
+  mock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mock create account and report to Port
+        env:
+          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+          PORT_BASE_URL: https://api.us.getport.io
+          PORT_CONTEXT_JSON: ${{ inputs.port_context }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          PORT_RUN_ID=$(echo "$PORT_CONTEXT_JSON" | jq -r '.runId // empty')
+          if [[ -z "$PORT_RUN_ID" ]]; then echo "::warning::No runId in port_context"; exit 0; fi
+          if [[ -z "${PORT_CLIENT_ID:-}" || -z "${PORT_CLIENT_SECRET:-}" ]]; then echo "::warning::PORT_CLIENT_ID/SECRET not set"; exit 0; fi
+          token=$(curl -sS -X POST "$PORT_BASE_URL/v1/auth/access_token" -H "Content-Type: application/json" -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" | jq -r '.accessToken')
+          port_log() { curl -sS -X POST "$PORT_BASE_URL/v1/actions/runs/$PORT_RUN_ID/logs" -H "Content-Type: application/json" -H "Authorization: Bearer $token" -d "$(jq -nc --arg msg "$1" '{message: $msg}')" >/dev/null || true; }
+          port_patch() { curl -sS -X PATCH "$PORT_BASE_URL/v1/actions/runs/$PORT_RUN_ID" -H "Content-Type: application/json" -H "Authorization: Bearer $token" -d "$1" >/dev/null || true; }
+          port_log "🚀 Mock: Creating new cloud account in org structure..."
+          port_log "📋 Account: ${{ inputs.account_name }} | Provider: ${{ inputs.cloud_provider }} | OU: ${{ inputs.parent_ou_id }}"
+          port_log "⏳ Mock: Validating org policies..."
+          port_log "🔐 Mock: Applying best-practice guardrails (simulated)..."
+          port_log "✅ Mock: Cloud account created successfully (demo only)."
+          port_patch "$(jq -nc --arg url "$RUN_URL" '{link: [$url], status: "SUCCESS"}')"
